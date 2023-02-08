@@ -1,0 +1,3588 @@
+---
+sidebar_position: 1
+tags: [Aria2, 中文, 翻译, 文档]
+title: aria2c
+description: aria2c 程序文档
+---
+
+
+
+export const Highlight = ({children}) => (
+  <span
+    style={{
+      backgroundColor: 'cornflowerblue',
+      borderRadius: '5px',
+      color: '#fff',
+      padding: '0.2rem',
+    }}>
+    {children}
+  </span>
+);
+
+export const CMD = ({children}) => (
+  <span
+    style={{
+      backgroundColor: '#687e18a7',
+      borderRadius: '3px',
+      color: '#fff',
+      padding: '0.6rem',
+      borderBottomWidth: '3px',
+      borderBottomColor: '#708b10',
+      borderBottomStyle: 'solid',
+      fontFamily: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace"
+    }}>
+    {children}
+  </span>
+);
+
+
+
+
+:::tip
+
+这篇文档翻译自
+**[aria2c(1)](https://aria2.github.io/manual/en/html/aria2c.html)**
+。<br/>
+当前文档翻译自版本 <Highlight> 1.36.0 </Highlight> <br />
+如果您想报告错误或改进此翻译，请在
+[https://github.com/yiskiee/aria2-chs-docs](https://github.com/yiskiee/aria2-chs-docs) 提交。
+
+:::
+:::tip
+
+- 使用 <Highlight>CTRL + F</Highlight> 进行关键词快速查找。
+- 点击 [`选项代码`](#) 可跳转至对应小节。
+- 使用右侧目录可快速定位。
+
+:::
+
+
+
+
+
+## 简介
+
+```shell
+aria2c [<选项>] [<URI>|<磁力链接>|<种子文件>|<Metalink 文件>] ...
+```
+<br /><br />
+
+
+
+
+## 描述
+
+Aria2 是用于下载文件的实用程序。支持的协议有
+HTTP(S)，FTP，SFTP，BitTorrent 和 Metalink。
+
+Aria2 可以从多个来源/协议下载文件，并尝试利用您的最大下载带宽。
+它支持同时从 HTTP(S)/FTP/SFTP 和 BitTorrent 下载文件，
+同时将 HTTP(S)/FTP/SFTP 下载的数据上传到 BitTorrent 群。
+
+Aria2 使用 Metalink 的块校验和，在下载文件时会自动验证数据块。
+<br /><br />
+
+
+
+
+
+## 选项
+
+:::info
+
+大多数与 FTP 相关的选项也适用于 SFTP。某些选项对 SFTP 无效（例如，[`--ftp-pasv`](#--ftp-pasv)）
+
+:::
+<br /><br />
+
+
+
+
+### 基本选项
+
+#### <CMD>-d, --dir=<DIR\></CMD> {#--dir}
+
+- 指定保存下载文件的目录。
+
+<br /><br />
+
+
+
+
+#### <CMD>-i, --input-file=<FILE\></CMD> {#--input-file}
+
+- 下载 `FILE` 中列出的 URI。
+
+您可以通过将多个 URI 放在由**水平制表符**分隔的单行上，为单个实体指定多个源。
+此外，可以在每个 URI 行之后指定选项。选项行必须以一个或多个空格字符（**空格**或**水平制表符**）开头，并且每行只能包含一个选项。
+
+输入文件可以使用 GZIP 压缩。
+当 `FILE` 指定为 `-` 时，Aria2 将从 `stdin` 读取。
+有关详细信息，请参阅[输入文件](#输入文件)小节。
+
+另请参阅 [`--deferred-input`](#--deferred-input) 和 [`--save-session`](#--save-session) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>-l, --log=<LOG\></CMD> {#--log}
+
+- 设置日志文件的文件名。
+
+如果指定了 `-` ，日志将会写入 `stdout`。
+如果指定了空字符串（`""`）或省略此选项，则不会将日志写入磁盘。
+<br /><br />
+
+
+
+
+
+#### <CMD>-j, --max-concurrent-downloads=<N\></CMD> {#--max-concurrent-downloads}
+
+- 设置每个队列项目的最大并行下载数。
+- 默认值：`5`
+
+另请参阅 [`--split`](#--split) 选项。
+
+:::info
+
+[`--max-concurrent-downloads`](#--max-concurrent-downloads) 限制并发下载的项目数。
+[`--split`](#--split) 和 [`--min-split-size`](#--min-split-size) 会影响每个项目内的连接数。
+假设你有一个输入文件（参见 [`--input-file`](#--input-file) 选项），如下所示：
+
+```
+http://example.com/foo
+http://example.com/bar
+```
+
+这里有两个下载项目。
+如果 [`--max-concurrent-downloads`](#--max-concurrent-downloads) 的值大于或等于 2，则 Aria2 可以并发下载这些项目。
+在每个下载项目中，您可以使用 [`--split`](#--split) 和/或 [`--min-split-size`](#--min-split-size) 等来配置连接数。
+
+:::
+<br /><br />
+
+
+
+
+
+#### <CMD>-V, --check-integrity [true|false]</CMD> {#--check-integrity}
+
+- 通过验证片段哈希或整个文件的哈希来检查文件完整性。
+- 默认值：`false`
+
+此选项仅在 BitTorrent，带有校验和的 Metalink 下载或使用 [`--checksum`](#--checksum) 选项的 HTTP(S)/FTP 下载中有效。
+
+如果提供了片段哈希，则此选项可以检测文件的损坏部分并重新下载它们。
+如果提供了整个文件的哈希，则仅在文件已下载时进行哈希检查。
+这是由文件长度决定的。
+如果哈希检查失败，则会从头开始重新下载文件。
+如果同时提供片段哈希和整个文件的哈希，则仅使用片段哈希。
+<br /><br />
+
+
+
+
+
+#### <CMD>-c, --continue [true|false]</CMD> {#--continue}
+
+- 继续下载已下载文件的剩余部分。
+
+使用此选项可恢复由 Web 浏览器或其他从头开始按顺序下载文件的程序启动的下载。
+目前此选项仅适用于 HTTP(S)/FTP 下载。
+<br /><br />
+
+
+
+
+
+#### <CMD>-h, --help[=<TAG\>|<KEYWORD\>]</CMD> {#--help}
+
+- 使用分类标记或关键词显示帮助消息。
+- 默认值：`#basic`
+
+标记以 `#` 开头。
+例如，键入 `--help=#http` 以获取标记为 `#http` 的选项的用法。
+如果给定了非标记单词，将打印名称包含该单词的选项的用法。
+
+可用值：`#basic`、`#advanced`、`#http`、`#https`、`#ftp`、
+`#metalink`、`#bittorrent`、`#cookie`、`#hook`、`#file`、
+`#rpc`、`#checksum`、`#experimental`、`#deprecated`、`#help`、`#all`
+<br /><br />
+
+
+
+
+
+### HTTP/FTP/SFTP 选项
+
+#### <CMD>--all-proxy=<PROXY\></CMD> {#--all-proxy}
+
+- 对所有协议使用代理服务器。
+- 有效值格式：`[http://][USER:PASSWORD@]HOST[:PORT]`
+
+要覆盖以前定义的代理，请使用空字符串（`""`）。
+您还可以覆盖此选项的设置，请使用 [`--http-proxy`](#--http-proxy)、
+[`--https-proxy`](#--https-proxy) 和 [`--ftp-proxy`](#--ftp-proxy) 选项为特定协议指定代理服务器。
+这会影响所有的下载。
+
+另请参阅[环境变量](#环境变量)部分。
+
+:::info
+
+如果用户和密码嵌入在代理 URI 中，
+并且它们也由 _--{http，https，ftp，all}-proxy-{user，passwd}_ 选项指定，
+则之后指定的选项将覆盖之前的选项。
+
+例如，如果您在配置文件 `aria2.conf` 中指定了 `http-proxy-user=myname` ，`http-proxy-passwd=mypass`，
+同时在命令行上指定了 `--http-proxy="http://proxy"`，
+那么您将获得带有用户名 `myname` 和密码 `mypass` 的 HTTP 代理 `http://proxy`。
+
+另一个例子：如果你在命令行上指定
+`--http-proxy="http://user:pass@proxy" --http-proxy-user="myname" --http-proxy-passwd="mypass"`，
+那么你会得到带有用户名 `myname` 和密码 `mypass` 的 HTTP 代理 `http://proxy`。
+
+再举一个例子：如果你在命令行中指定
+`--http-proxy-user="myname" --http-proxy-passwd="mypass" --http-proxy="http://user:pass@proxy"`，
+那么你将获得带有用户名 `user` 和密码 `pass` 传递的 HTTP 代理 `http://proxy`。
+
+:::
+<br /><br />
+
+
+
+
+
+#### <CMD>--all-proxy-passwd=<PASSWD\></CMD> {#--all-proxy-passwd}
+
+- 为 [`--all-proxy`](#--all-proxy) 选项设置密码。
+<br /><br />
+
+
+
+
+
+#### <CMD>--all-proxy-user=<USER\></CMD> {#--all-proxy-user}
+
+- 为 [`--all-proxy`](#--all-proxy) 选项设置用户名。
+<br /><br />
+
+
+
+
+#### <CMD>--checksum=<TYPE\>=<DIGEST\></CMD> {#--checksum}
+
+- 设置校验和。
+
+`TYPE` 是哈希类型。
+支持的哈希类型列在 `aria2c -v` 中的 `Hash Algorithms` 中。
+
+例如，设置 sha-1 摘要如下所示：`sha-1=0192ba11326fe2298c8cb4de616f4d4140213838`。
+此选项仅适用于 HTTP(S)/FTP 下载。
+<br /><br />
+
+
+
+
+#### <CMD>--connect-timeout=<SEC\></CMD> {#--connect-timeout}
+
+- 设置建立与 HTTP/FTP/代理服务器 连接的连接超时（以秒为单位）。
+- 默认值：`60`
+
+建立连接后，此选项不起作用，而是使用 [`--timeout`](#--timeout) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>--dry-run [true|false]</CMD> {#--dry-run}
+
+- 只检查远程文件是否可用。
+- 默认值：`false`
+
+如果设置为 `true`，Aria2 只检查远程文件是否可用，不下载数据。
+此选项对 HTTP/FTP 下载有效。
+如果为 BitTorrent 下载指定了 `true`，则取消下载。
+<br /><br />
+
+
+
+
+
+#### <CMD>--lowest-speed-limit=<SPEED\></CMD> {#--lowest-speed-limit}
+
+- 设置最低下载速度限制。
+- 默认值：`0`
+
+如果下载速度低于或等于此值（每秒字节数），则关闭连接。
+
+`0` 表示 Aria2 没有最低速度限制。
+您可以附加 `K` 或 `M`**（1K = 1024，1M = 1024K）**。
+此选项不会影响 BitTorrent 下载。
+<br /><br />
+
+
+
+
+
+#### <CMD>-x, --max-connection-per-server=<NUM\></CMD> {#--max-connection-per-server}
+
+- 设置每台服务器最大连接数。
+- 默认值：`1`
+
+每次从一台服务器下载时的最大连接数。
+<br /><br />
+
+
+
+
+#### <CMD>--max-file-not-found=<NUM\></CMD> {#--max-file-not-found}
+
+- 设置最大 “找不到文件” 次数。
+- 默认值：`0`
+
+如果 Aria2 从远程 HTTP/FTP 服务器 `NUM` 次收到 “找不到文件” 状态，也没有收到一个字节，则强制下载失败。
+
+指定 `0` 以禁用此选项。
+此选项仅在使用 HTTP/FTP 服务器时有效。
+重试尝试次数计入 [`--max-tries`](#--max-tries)，因此也应对其进行配置。
+<br /><br />
+
+
+
+
+#### <CMD>-m, --max-tries=<N\></CMD> {#--max-tries}
+
+- 设置最大尝试次数。
+- 默认值：`5`
+
+`0` 表示无限制。
+另请参阅 [`--retry-wait`](#--retry-wait)。
+<br /><br />
+
+
+
+
+
+#### <CMD>-k, --min-split-size=<SIZE\></CMD> {#--min-split-size}
+
+- 设置最小文件拆分大小。
+- 默认值：`20M`
+
+Aria2 不会拆分下载小于 2 \* SIZE 字节范围的文件。
+
+例如，让我们考虑下载 20MiB 文件。
+如果 `SIZE` 为 10M，Aria2 可以将文件拆分为 2 个范围［0-10MiB）和［10MiB-20MiB），
+并使用 2 个源下载（当然，如果 [`--split`](#--split) 大于或等于 2 时）。
+如果 `SIZE` 为 15M，由于 2 \* 15M 大于 20MiB，所以 Aria2 不会拆分文件，并使用 1 个源下载。
+您可以附加 `K` 或 `M` **（1K = 1024，1M = 1024K）**。
+取值范围：`1M`-`1024M`。
+<br /><br />
+
+
+
+
+
+#### <CMD>--netrc-path=<FILE\></CMD> {#--netrc-path}
+
+- 指定 netrc 文件的路径。
+- 默认值：`$(HOME)/.netrc`
+
+:::caution
+
+`.netrc` 文件的权限必须为 `600`。否则该文件将被忽略。
+
+:::
+<br /><br />
+
+
+
+
+
+#### <CMD>-n, --no-netrc [true|false]</CMD> {#--no-netrc}
+
+- 禁用 netrc 支持。
+- 默认值：`false`
+
+:::info
+
+如果 [`--no-netrc`](#--no-netrc) 为 `false`，netrc 文件仅在 Aria2 启动时读取。
+因此，如果 [`--no-netrc`](#--no-netrc) 在启动时为 `true`，则 netrc 在整个会话中都不可用。
+即使使用 [`aria2.changeGlobalOption()`](#aria2.changeGlobalOption) 发送 `--no-netrc=false`，也无法启用 netrc。
+
+:::
+<br /><br />
+
+
+
+
+
+#### <CMD>--no-proxy=<DOMAINS\></CMD> {#--no-proxy}
+
+- 指定不使用代理的 `DOMAINS`
+
+指定带或不带子网掩码的主机名、域和网络地址列表（以逗号 `,` 分隔），它们将不会使用代理。
+
+:::info
+
+对于带有子网掩码的网络地址，IPv4 和 IPv6 地址都有效。
+当前实现无法解析 URI 中的主机名以比较 [`--no-proxy`](#--no-proxy) 中指定的网络地址。
+因此，仅当 URI 具有数字 IP 地址时，它才有效。
+
+:::
+<br /><br />
+
+
+
+
+
+#### <CMD>-o, --out=<FILE\></CMD> {#--out}
+
+- 下载文件的文件名。
+
+它始终相对于 [`--dir`](#--dir) 选项中给出的目录。
+当使用 [`--force-sequential`](#--force-sequential) 时，此选项将被忽略。
+
+:::caution
+
+您不能为 Metalink 或 BitTorrent 的下载指定文件名。
+在命令行上直接提供 URI 给 Aria2 时，指定的文件名才有效，
+除了使用 [`--input-file`](#--input-file) 和 [`--force-sequential`](#--force-sequential) 选项时。
+例如：
+
+```shell
+$ aria2c -o myfile.zip "http://mirror1/file.zip" "http://mirror2/file.zip"
+```
+
+:::
+<br /><br />
+
+
+
+#### <CMD>--proxy-method=<METHOD\></CMD> {#--proxy-method}
+
+- 设置要在代理请求中使用的方法。
+- 默认值：`get`
+
+`METHOD` 要么是 `get`，要么是 `tunnel`。无论此选项如何，HTTPS 下载始终使用 `tunnel`。
+<br /><br />
+
+
+
+
+#### <CMD>-R, --remote-time [true|false]</CMD> {#--remote-time}
+
+- 获取远程文件的时间戳。
+- 默认值：`false`
+
+从远程 HTTP/FTP 服务器检索远程文件的时间戳，如果可用，则将其应用于本地文件。
+<br /><br />
+
+
+
+
+#### <CMD>--reuse-uri [true|false]</CMD> {#--reuse-uri}
+
+- 设置 URI 重用。
+- 默认值：`true`
+
+如果没有未使用的 URI，则重用已使用的 URI。
+<br /><br />
+
+
+
+
+#### <CMD>--retry-wait=<SEC\></CMD> {#--retry-wait}
+
+- 设置重试的时间间隔（以秒为单位）。
+- 默认值：`0`
+
+当 `SEC > 0` 时，Aria2 将在 HTTP 服务器返回 503 响应时重试下载。
+<br /><br />
+
+
+
+
+#### <CMD>--server-stat-of=<FILE\></CMD> {#--server-stat-of}
+
+- 指定保存服务器性能配置文件的文件名。
+
+您可以使用 [`--server-stat-if`](#--server-stat-if) 选项加载保存的数据。
+有关文件格式，请参阅[服务器性能配置文件](#服务器性能配置文件)小节。
+<br /><br />
+
+
+
+
+#### <CMD>--server-stat-if=<FILE\></CMD> {#--server-stat-if}
+
+- 指定文件名以加载服务器的性能配置文件。
+
+加载的数据将用于某些 URI 选择器，例如 `feedback`。
+另请参阅 [`--uri-selector`](#--uri-selector) 选项。
+有关文件格式，请参阅[服务器性能配置文件](#服务器性能配置文件)小节。
+<br /><br />
+
+
+
+
+#### <CMD>--server-stat-timeout=<SEC\></CMD> {#--server-stat-timeout}
+
+- 指定服务器性能配置文件超时（以秒为单位）。
+- 默认值：`86400`（24 小时）
+
+指定超时，以使自上次与服务器联系以来服务器的性能配置文件失效。
+<br /><br />
+
+
+
+
+
+#### <CMD>-s, --split=<N\></CMD> {#--split}
+
+- 使用 `N` 个连接下载文件。
+- 默认值：`5`
+
+如果给出的 URI 超过 `N` 个，则使用前 `N` 个 URI，其余 URI 留作备用。
+如果给出的 URI 少于 `N` 个，则会复用这些 URI，以便同时建立总共 `N` 个连接。
+
+与同一主机的连接数受 [`--max-connection-per-server`](#--max-connection-per-server) 选项的限制。
+另请参阅 [`--min-split-size`](#--min-split-size) 选项。
+
+:::info
+
+一些 Metalink 规定了要连接的服务器数量。
+Aria2 会严格遵守这些规定。
+这意味着，如果 Metalink 定义的 `maxconnections` 属性低于 `N`，则 Aria2 使用此较低值的值而不是 `N`。
+
+:::
+<br /><br />
+
+
+
+
+#### <CMD>--stream-piece-selector=<SELECTOR\></CMD> {#--stream-piece-selector}
+
+- 指定 HTTP/FTP 下载中使用的片段选择算法。
+- 默认值：`default`
+
+片段是指分段下载中并行下载的固定长度段。
+
+如果给出 `default`，Aria2 会选择能尽量减少建立连接数量的片段。
+这是合理的默认行为，因为建立连接是一项代价高昂的操作。
+
+如果给出 `inorder`，Aria2 会选择选择具有最小索引的片段。
+索引为零表示文件的第一段。
+这对于在下载的同时查看影片很有用。
+
+如果给出 `random`，Aria2 将随机选择片段。
+
+如果给出 `geom`，则在开始时 Aria2 选择具有最小索引的片段（类似 `inorder`），
+但在之后它会基于先前选择的片段长度成倍地增长。
+这样能减少建立连接的数量，同时也能先下载文件的开头部分。
+这对于在下载的同时查看影片很有用。
+
+:::info
+
+[`--enable-http-pipelining`](#--enable-http-pipelining) 选项可能有助于减少重新连接的开销。
+
+:::
+:::caution
+
+片段选择算法受 [`--min-split-size`](#--min-split-size) 选项的影响，
+因此有必要为 [`--min-split-size`](#--min-split-size) 选项指定一个合理的值。
+
+:::
+<br /><br />
+
+
+
+
+#### <CMD>-t, --timeout=<SEC\></CMD> {#--timeout}
+
+- 设置超时（以秒为单位）。
+- 默认值：`60`
+
+<br /><br />
+
+
+
+
+#### <CMD>--uri-selector=<SELECTOR\></CMD> {#--uri-selector}
+
+- 指定 URI 选择算法。
+- 默认值：`feedback`
+
+如果给出 `inorder`，则按 URI 列表中出现的顺序尝试 URI。
+
+如果给出 `feedback`，Aria2 将在 URI 列表中选择之前下载中观察到的下载速度最快的服务器。
+这也有效地跳过了失效的镜像。
+观察到的下载速度是 [`--server-stat-of`](#--server-stat-of) 和
+[`--server-stat-if`](#--server-stat-if) 选项中提到的服务器性能配置文件的一部分。
+
+如果给定 `adaptive`，则为第一个连接和保留连接选择一个最佳镜像。
+对于补充镜像，它返回尚未测试的镜像。
+如果每个镜像都已经过测试，则返回必须再次测试的镜像。
+否则，它不会再选择镜像。
+与 `feedback` 一样，它使用服务器的性能配置文件。
+<br /><br />
+
+
+
+
+### HTTP 特定选项
+
+#### <CMD>--ca-certificate=<FILE\></CMD> {#--ca-certificate}
+
+- 使用 FILE 中的证书颁发机构验证对等方。
+
+证书文件必须采用 PEM 格式，并且可以包含多个 CA 证书。
+使用 [`--check-certificate`](#--check-certificate) 选项启用验证。
+
+:::info
+
+如果您使用 OpenSSL 或具有 `gnutls_certificate_set_x509_system_trust()` 功能的最新版本的 GnuTLS 进行构建，
+并且库已正确配置为定位系统范围的 CA 证书存储，Aria2 将在启动时自动加载这些证书。
+
+:::
+
+:::caution
+
+WinTLS 和 AppleTLS 不支持此选项。
+作为替代，您必须将证书导入操作系统信任存储区。
+
+:::
+<br /><br />
+
+
+
+
+#### <CMD>--certificate=<FILE\></CMD> {#--certificate}
+
+- 在 `FILE` 中使用客户端证书。
+
+证书必须采用 PKCS12（`.p12`、`.pfx`）或 PEM 格式。
+PKCS12 文件必须包含证书、密钥和可选的附加证书链。只能打开导入密码为空的 PKCS12文件！
+使用 PEM 时，还必须通过 [`--private-key`](#--private-key) 指定私钥。
+
+:::caution
+
+WinTLS 目前不支持 PEM 文件。
+用户必须使用 PKCS12 文件。
+
+AppleTLS 用户应使用 “KeyChain Access” 实用工具导入客户端证书，并从与该证书对应的 “信息” 对话框中获取 SHA-1 指纹。
+要启动 `aria2c`，请使用 `--certificate=<SHA-1>` 。
+另外也支持 PKCS12 文件，但是不支持 PEM 文件。
+
+:::
+<br /><br />
+
+
+
+
+#### <CMD>--check-certificate [true|false]</CMD> {#--check-certificate}
+
+- 使用 [`--ca-certificate`](#--ca-certificate) 选项中指定的证书验证对等方。
+- 默认值：`true`
+
+<br /><br />
+
+
+
+
+#### <CMD>--http-accept-gzip [true|false]</CMD> {#--http-accept-gzip}
+
+- 发送接受 HTTP GZIP 请求标头。
+- 默认值：`false`
+
+发送 `Accept: deflate, gzip` 请求标头，
+如果远程服务器以 `Content-Encoding: gzip` 或 `Content-Encoding: deflate` 作为响应，则解压响应。
+
+:::info
+
+某些服务器以 `Content-Encoding: gzip` 作为响应，表示文件本身是 GZIP 文件。
+Aria2 无论如何都会根据响应标头而解压它们。
+
+:::
+<br /><br />
+
+
+
+
+#### <CMD>--http-auth-challenge [true|false]</CMD> {#--http-auth-challenge}
+
+- 仅当服务器请求时才发送 HTTP 授权标头。
+- 默认值：`false`
+
+如果设置为 `false`，则始终将授权标头发送到服务器。
+有一个例外：如果用户名和密码嵌入在 URI 中，则无论此选项如何，授权标头始终发送到服务器。
+<br /><br />
+
+
+
+
+#### <CMD>--http-no-cache [true|false]</CMD> {#--http-no-cache}
+
+- 发送 HTTP 不缓存请求标头。
+- 默认值：`false`
+
+发送 `Cache-Control: no-cache` 和 `Pragma: no-cache` 标头以避免缓存内容。
+如果给出 `false`，则不会发送这些标头，
+您可以使用 [`--header`](#--header) 选项添加带有自定义指令的 Cache-Control 标头。
+<br /><br />
+
+
+
+
+#### <CMD>--http-user=<USER\></CMD> {#--http-user}
+
+- 设置 HTTP 用户名。
+
+这会影响所有 URI。
+<br /><br />
+
+
+
+
+
+#### <CMD>--http-passwd=<PASSWD\></CMD> {#--http-passwd}
+
+- 设置 HTTP 密码。
+
+这会影响所有 URI。
+<br /><br />
+
+
+
+
+#### <CMD>--http-proxy=<PROXY\></CMD> {#--http-proxy}
+
+- 对 HTTP 使用代理服务器。
+- 有效值格式：`[http://][USER:PASSWORD@]HOST[:PORT]`
+
+要覆盖以前定义的代理，请使用空字符串（`""`）。
+另请参阅 [`--all-proxy`](#--all-proxy) 选项。
+
+这会影响所有 HTTP 下载。
+<br /><br />
+
+
+
+
+#### <CMD>--http-proxy-passwd=<PASSWD\></CMD> {#--http-proxy-passwd}
+
+- 为 [`--http-proxy`](#--http-proxy) 设置密码。
+
+<br /><br />
+
+
+
+
+
+#### <CMD>--http-proxy-user=<USER\></CMD> {#--http-proxy-user}
+
+- 为 [`--http-proxy`](#--http-proxy) 设置用户名。
+
+<br /><br />
+
+
+
+
+
+#### <CMD>--https-proxy=<PROXY\></CMD> {#--https-proxy}
+
+- 对 HTTP 使用代理服务器。
+- 有效值格式：`[http://][USER:PASSWORD@]HOST[:PORT]`
+
+要覆盖以前定义的代理，请使用空字符串（`""`）。
+另请参阅 [`--all-proxy`](#--all-proxy) 选项。
+
+这会影响所有 HTTP 下载。
+<br /><br />
+
+
+
+
+#### <CMD>--https-proxy-passwd=<PASSWD\></CMD> {#--https-proxy-passwd}
+
+- 为 [`--https-proxy`](#--https-proxy) 设置密码。
+
+<br /><br />
+
+
+
+
+
+#### <CMD>--https-proxy-user=<USER\></CMD> {#--https-proxy-user}
+
+- 为 [`--https-proxy`](#--https-proxy) 设置用户名。
+
+<br /><br />
+
+
+
+
+#### <CMD>--private-key=<FILE\></CMD> {#--private-key}
+
+- 使用 `FILE` 中的私钥。
+
+另请参阅 [`--certificate`](#--certificate) 选项。
+
+:::danger
+
+私钥必须解密并采用 PEM 格式。
+给定加密的私钥会造成未定义的后果。
+
+:::
+<br /><br />
+
+
+
+
+#### <CMD>--referer=<REFERER\></CMD> {#--referer}
+
+- 设置一个 HTTP 引用来源网址（Referer）。
+
+这会影响所有 HTTP(S) 下载。
+如果给出 `*`，则下载 URI 也会被作为引用来源。
+当与 [`--parameterized-uri`](#--parameterized-uri) 选项一起使用时，这可能会很有用。
+<br /><br />
+
+
+
+
+#### <CMD>--enable-http-keep-alive [true|false]</CMD> {#--enable-http-keep-alive}
+
+- 启用 HTTP/1.1 持久连接。
+- 默认值：`true`
+
+<br /><br />
+
+
+
+
+#### <CMD>--enable-http-pipelining [true|false]</CMD> {#--enable-http-pipelining}
+
+- 启用 HTTP/1.1 流水线。
+- 默认值：`false`
+
+:::info
+
+从性能角度来看，启用此选项通常没有优势。
+
+:::
+<br /><br />
+
+
+
+
+#### <CMD>--header=<HEADER\></CMD> {#--header}
+
+- 将标头附加到 HTTP 请求标头。
+
+您可以重复使用此选项来指定多个标头：
+
+```shell
+$ aria2c --header="X-A: b78" --header="X-B: 9J1" "http://host/file"
+```
+<br /><br />
+
+
+
+
+#### <CMD>--load-cookies=<FILE\></CMD> {#--load-cookies}
+
+- 从 `FILE` 中加载 Cookie。
+
+使用 Firefox3 格式（SQLite3）、Chromium/Google Chrome （SQLite3）和
+Mozilla/Firefox（1.x/2.x）/Netscape 格式从 `FILE` 中加载 Cookie。
+
+:::caution
+
+如果 Aria2 是在没有 libsqlite3 的情况下构建的，
+那么它不支持 Firefox3 和 Chromium/Google Chrome 的 Cookie 格式。
+
+:::
+<br /><br />
+
+
+
+
+#### <CMD>--save-cookies=<FILE\></CMD> {#--save-cookies}
+
+- 将 Cookie 以 Mozilla/Firefox（1.x/2.x）/ Netscape 格式保存到 `FILE`。
+- 有效值格式：`/path/to/file`
+
+如果 `FILE` 已存在，则会覆盖它。
+会话 Cookie 也会被保存，其到期值被视为 0。
+<br /><br />
+
+
+
+
+#### <CMD>--use-head [true|false]</CMD> {#--use-head}
+
+- 对 HTTP 服务器的第一个请求使用 HEAD 方法。
+- 默认值：`false`
+
+<br /><br />
+
+
+
+
+
+#### <CMD>-U, --user-agent=<USER_AGENT\></CMD> {#--user-agent}
+
+- 为 HTTP(S) 下载设置用户代理。
+- 有效值格式：`aria2/$VERSION`
+
+`$VERSION` 应当替换为软件包版本。
+<br /><br />
+
+
+
+
+### FTP/SFTP 特定选项
+
+#### <CMD>--ftp-user=<USER\></CMD> {#--ftp-user}
+
+- 设置 FTP 用户。
+- 默认值：`anonymous`
+
+这会影响所有 URI。
+<br /><br />
+
+
+
+
+#### <CMD>--ftp-passwd=<PASSWD\></CMD> {#--ftp-passwd}
+
+- 设置 FTP 密码。
+- 默认值：`ARIA2USER@`
+
+这会影响所有 URI。
+如果 URI 中嵌入了用户名但缺少密码，Aria2 会尝试使用 `.netrc` 解析密码。
+如果在 `.netrc` 中找到了密码，则将其用作 FTP 的密码。
+如果没有，请使用此选项中指定的密码。
+<br /><br />
+
+
+
+
+#### <CMD>-p, --ftp-pasv [true|false]</CMD> {#--ftp-pasv}
+
+- 在 FTP 中使用被动模式。
+- 默认值：`true`
+
+如果给出 `false`，则将使用活动模式。
+
+:::info
+
+对于 SFTP 传输，将忽略此选项。
+
+:::
+<br /><br />
+
+
+
+
+#### <CMD>--ftp-proxy=<PROXY\></CMD> {#--ftp-proxy}
+
+- 对 FTP 使用代理服务器。
+- 有效值格式：`[http://][USER:PASSWORD@]HOST[:PORT]`
+
+要覆盖以前定义的代理，请使用空字符串（`""`）。
+这会影响所有 FTP 下载。
+另请参阅 [`--all-proxy`](#--all-proxy) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>--ftp-proxy-passwd=<PASSWD\></CMD> {#--ftp-proxy-passwd}
+
+- 为 [`--ftp-proxy`](#--ftp-proxy) 选项设置密码。
+
+<br /><br />
+
+
+
+
+
+#### <CMD>--ftp-proxy-user=<USER\></CMD> {#--ftp-proxy-user}
+
+- 为 [`--ftp-proxy`](#--ftp-proxy) 选项设置用户名。
+
+<br /><br />
+
+
+
+
+#### <CMD>--ftp-type=<TYPE\></CMD> {#--ftp-type}
+
+- 设置 FTP 传输类型。
+- 默认值：`binary`
+
+`TYPE` 可以是 `binary` 或 `ascii` 。
+<br /><br />
+
+
+
+
+#### <CMD>--ftp-reuse-connection [true|false]</CMD> {#--ftp-reuse-connection}
+
+- 在 FTP 中重用连接。
+- 默认值：`true`
+
+<br /><br />
+
+
+
+
+#### <CMD>--ssh-host-key-md=<TYPE\>=<DIGEST\></CMD> {#--ssh-host-key-md}
+
+- 设置 SSH 主机公钥的校验和。
+
+`TYPE` 是哈希类型。
+支持的哈希类型为 `sha-1` 或 `md5`。
+`DIGEST` 是十六进制摘要。
+例如：`sha-1=b030503d4de4539dc7885e6f0f5e256704edf4c3`。
+
+此选项可用于在使用 SFTP 时验证服务器的公钥。
+如果未设置此选项（默认未设置），则不会进行验证。
+<br /><br />
+
+
+
+
+### BitTorrent/Metalink 选项
+
+#### <CMD>--select-file=<INDEX\>...</CMD> {#--select-file}
+
+- 通过指定其索引来设置要下载的文件。
+
+您可以使用 [`--show-files`](#--show-files) 选项找到文件索引。
+可以使用逗号（`,`）指定多个索引，例如：`3,6`。
+您还可以使用 `-` 指定范围，例如：`1-5`。
+`,` 和 `-` 可以一起使用，例如：`1-5,8,9`。
+
+:::caution
+
+与 [`--metalink-file`](#--metalink-file) 选项一起使用时，索引可能因查询而异（请参见 _--metalink-\*_ 选项）。
+
+:::
+:::info
+
+在多文件种子中，此选项指定的相邻文件也可能会被下载。
+这是设计使然，而不是错误。
+一个数据片段可能包含多个文件或文件的一部分，Aria2 会将这个片段写入相应的文件。
+
+:::
+<br /><br />
+
+
+
+
+
+#### <CMD>-S, --show-files [true|false]</CMD> {#--show-files}
+
+- 打印 `.torrent`、`.meta4` 和 `.metalink` 文件的文件列表并退出。
+
+如果是 `.torrent` 文件，还会打印其他信息（InfoHash、片段长度等）。
+<br /><br />
+
+
+
+
+
+### BitTorrent 特定选项
+
+#### <CMD>--bt-detach-seed-only [true|false]</CMD> {#--bt-detach-seed-only}
+
+- 在计算并发下载活动时排除仅做种下载（请参阅 [`--max-concurrent-downloads`](#--max-concurrent-downloads) 选项）。
+- 默认值：`false`
+
+这意味着，如果给定 `--max-concurrent-downloads=3` 并且此选项处于打开状态，并且 3 个下载处于活动状态，
+其中一个进入做种模式，则它从下载活动计数中排除（因此变为 2），并且队列中等待的下一个下载开始。
+但请注意，在 RPC 方法中，做种设定项仍被识别为下载活动。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-enable-hook-after-hash-check [true|false]</CMD> {#--bt-enable-hook-after-hash-check}
+
+- 允许在 BitTorrent 下载中进行哈希检查后调用钩子命令（请参阅 [`--check-integrity`](#--check-integrity) 选项）。
+- 默认值：`true`
+
+默认情况下，当哈希检查成功时，将执行 [`--on-bt-download-complete`](#--on-bt-download-complete) 给出的命令。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-enable-lpd [true|false]</CMD> {#--bt-enable-lpd}
+
+- 启用本地 Peer 发现。
+- 默认值：`false`
+
+如果在种子中设置了私有标志，即使给定 `true`，Aria2 也不会使用该功能进行该下载。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-exclude-tracker=<URI\>[,...]</CMD> {#--bt-exclude-tracker}
+
+- 移除 BitTorrent Tracker 以逗号分隔的 URI 声明列表。
+
+您可以使用特殊值 `*` 以移除所有 URI 声明。
+另请参阅 [`--bt-tracker`](#--bt-tracker) 选项。
+
+:::caution
+
+在 shell 命令行中指定 `*` 时，请不要忘记使用**转义符**或**单引号**！
+
+:::
+<br /><br />
+
+
+
+
+
+#### <CMD>--bt-external-ip=<IPADDRESS\></CMD> {#--bt-external-ip}
+
+- 指定要在 BitTorrent 下载和 DHT 中使用的外部 IP 地址。
+
+这个外部 IP 地址可能会被发送到 BitTorrent Tracker。
+对于 DHT，此选项应设置为报告本地节点正在下载特定种子。
+这对于在专用网络中使用 DHT 至关重要。
+尽管此选项名带有 `external`，但它可以接受任何类型的 IP 地址。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-force-encryption [true|false]</CMD> {#--bt-force-encryption}
+
+- 使用 arc4 对 BitTorrent 消息有效负载进行强制加密。
+- 默认值：`false`
+
+这是 [`--bt-require-crypto`](#--bt-require-crypto) 和 `--bt-min-crypto-level=arc4` 同时使用的简写。
+此选项不会更改这些选项的选项值。
+如果给定 `true`，则拒绝旧版 BitTorrent 握手，仅使用混淆握手并始终加密消息有效负载。
+<br /><br />
+
+
+
+
+
+#### <CMD>--bt-hash-check-seed [true|false]</CMD> {#--bt-hash-check-seed}
+
+- 做种前校验哈希。
+- 默认值：`true`
+
+如果给出 `true`，则在文件下载完成后先使用 [`--check-integrity`](#--check-integrity) 选项进行哈希检查，然后开始做种。
+如果您希望仅在文件损坏或不完整时检查文件并下载它，请将此选项设置为 `false`。
+此选项仅对 BitTorrent 下载有效。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-load-saved-metadata [true|false]</CMD> {#--bt-load-saved-metadata}
+
+- 读取保存的元数据。
+- 默认值：`false`
+
+在使用磁力链接从 DHT 获取种子元数据并下载前，首先尝试读取由 [`--bt-save-metadata`](#--bt-save-metadata) 选项保存的种子文件。
+如果成功，则跳过从DHT下载元数据。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-lpd-interface=<INTERFACE\></CMD> {#--bt-lpd-interface}
+
+- 使用给定的接口进行本地 Peer 发现。
+- 可用值：接口、IP 地址
+
+如果未指定此选项，则选择默认接口。
+您可以指定接口名称和 IP 地址。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-max-open-files=<NUM\></CMD> {#--bt-max-open-files}
+
+- 设置最大文件打开数。
+- 默认值：`100`
+
+指定在全局多文件 BitTorrent/Metalink 下载中打开并执行读写操作的最大文件数。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-max-peers=<NUM\></CMD> {#--bt-max-peers}
+
+- 指定每个种子连接的最大 Peer 数。
+- 默认值：`55`
+
+`0` 表示无限制。
+另请参阅 [`--bt-request-peer-speed-limit`](#--bt-request-peer-speed-limit) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-metadata-only [true|false]</CMD> {#--bt-metadata-only}
+- 仅下载 Magnet 中的元数据。
+- 默认值：`false`
+
+元数据中描述的文件将不会下载。
+此选项仅在使用 BitTorrent Magnet URI 时生效。
+另请参阅 [`--bt-save-metadata`](#--bt-save-metadata) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-min-crypto-level=plain|arc4</CMD> {#--bt-min-crypto-level}
+
+- 设置最低级别的加密方法。
+- 默认值：`plain`
+
+如果 Peer 提供了多种加密方法，Aria2 会选择满足给定级别的最低加密方法。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-prioritize-piece=head[=<SIZE\>],tail[=<SIZE\>]</CMD> {#--bt-prioritize-piece}
+
+- 优先下载每个文件的首尾片段。
+
+这对于预览文件很有用。
+参数可以包含 2 个关键字：`head` 和 `tail`，它们必须用逗号分隔。
+这些关键字可以附加参数 `SIZE`。
+
+例如，如果指定了 `head=<SIZE>`，则每个文件的首部 `SIZE` 字节范围内的片段将获得更高的优先级。
+`tail=<SIZE>` 表示每个文件尾部 `SIZE` 字节的范围。
+
+`SIZE` 可以附加 `K` 或 `M` **（1K = 1024，1M = 1024K）**。
+如果省略 `SIZE`，则使用默认值 `SIZE=1M`。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-remove-unselected-file [true|false]</CMD> {#--bt-remove-unselected-file}
+
+- 在 BitTorrent 中完成下载时删除未选择的文件。
+- 默认值：`false`
+
+要选择文件，请使用 [`--select-file`](#--select-file) 选项。
+如果未使用，则假定已选择所有文件。
+请谨慎使用此选项，因为它实际上会从磁盘中删除文件。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-require-crypto [true|false]</CMD> {#--bt-require-crypto}
+
+- 启用 BitTorrent 加密。
+- 默认值：`false`
+
+如果给出 `true`，Aria2 不接受建立与传统 BitTorrent 握手（\19BitTorrent 协议）的连接。
+Aria2 将始终使用混淆握手。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-request-peer-speed-limit=<SPEED\></CMD> {#--bt-request-peer-speed-limit}
+
+- BitTorrent 请求提升下载速度的最低速度限制。
+- 默认值：`50K`
+
+如果每个种子的整个下载速度低于 `SPEED`，Aria2 会暂时增加 Peer 的数量以尝试更高的下载速度。
+在某些情况下，根据您的网络情况设置合适的值可以提高下载速度。
+`SPEED` 可以附加 `K` 或 `M` **（1K = 1024，1M = 1024K）**。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-save-metadata [true|false]</CMD> {#--bt-save-metadata}
+
+- 将元数据另存为 `.torrent` 文件。
+- 默认值：`false`
+
+此选项仅在使用 BitTorrent Magnet URI 时生效。
+文件名是十六进制编码的 InfoHash，后缀为 `.torrent`。
+文件保存的目录与文件下载的目录相同。
+如果相同文件已存在，则不保存元数据。
+另请参阅 [`--bt-metadata-only`](#--bt-metadata-only) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-seed-unverified [true|false]</CMD> {#--bt-seed-unverified}
+- 做种以前下载的文件时不验证片段哈希。
+- 默认值：`false`
+
+<br /><br />
+
+
+
+
+#### <CMD>--bt-stop-timeout=<SEC\></CMD> {#--bt-stop-timeout}
+
+- 设置 BitTorrent 下载超时停止。
+- 默认值：`0`
+
+如果连续 `SEC` 秒内下载速度为 0，则停止 BitTorrent 下载。
+如果给定 0，则禁用此功能。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-tracker=<URI\>[,...]</CMD> {#--bt-tracker}
+
+- 额外添加 BitTorrent Tracker 以逗号分隔的 URI 声明列表。
+
+这些 URI 不受 [`--bt-exclude-tracker`](#--bt-exclude-tracker) 选项的影响，
+因为它们是在移除 [`--bt-exclude-tracker`](#--bt-exclude-tracker) 选项中的 URI 之后添加的。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-tracker-connect-timeout=<SEC\></CMD> {#--bt-tracker-connect-timeout}
+
+- 设置与 Tracker 建立连接的连接超时（以秒为单位）。
+- 默认值：`60`
+
+建立连接后，此选项不起作用，而是使用 [`--bt-tracker-timeout`](#--bt-tracker-timeout) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-tracker-interval=<SEC\></CMD> {#--bt-tracker-interval}
+
+- 设置 Tracker 请求的间隔（以秒为单位）。
+- 默认值：`0`
+
+这完全覆盖了间隔值，Aria2 将只使用此值，并忽略 Tracker 响应中的最小间隔和间隔值。
+如果设置为 `0`，Aria2 会根据 Tracker 的响应和下载进度设定间隔。
+<br /><br />
+
+
+
+
+#### <CMD>--bt-tracker-timeout=<SEC\></CMD> {#--bt-tracker-timeout}
+
+- 设置超时（以秒为单位）。
+- 默认值：`60`
+
+<br /><br />
+
+
+
+
+#### <CMD>--dht-entry-point=<HOST\>:<PORT\></CMD> {#--dht-entry-point}
+
+- 设置 IPv4 DHT 网络接入点的主机和端口号。
+
+<br /><br />
+
+
+
+
+#### <CMD>--dht-entry-point6=<HOST\>:<PORT\></CMD> {#--dht-entry-point6}
+
+- 设置 IPv6 DHT 网络接入点的主机和端口号。
+
+<br /><br />
+
+
+
+
+#### <CMD>--dht-file-path=<PATH\></CMD> {#--dht-file-path}
+
+- 将 IPv4 DHT 路由表文件更改为 PATH。
+- 默认值：`$HOME/.aria2/dht.dat`
+
+如果默认路径不存在，则使用 `$XDG_CACHE_HOME/aria2/dht.dat`。
+<br /><br />
+
+
+
+#### <CMD>--dht-file-path6=<PATH\></CMD> {#--dht-file-path6}
+
+- 将 IPv6 DHT 路由表文件更改为 PATH。
+- 默认值：`$HOME/.aria2/dht6.dat`
+
+如果默认路径不存在，则使用 `$XDG_CACHE_HOME/aria2/dht6.dat`。
+<br /><br />
+
+
+
+#### <CMD>--dht-listen-addr6=<ADDR\></CMD> {#--dht-listen-addr6}
+
+- 指定要绑定 IPv6 DHT 套接字的地址。
+
+它应该是主机的全局单播 IPv6 地址。
+<br /><br />
+
+
+
+
+#### <CMD>--dht-listen-port=<PORT\>...</CMD> {#--dht-listen-port}
+
+- 设置 DHT（IPv4，IPv6）和 UDP Tracker 使用的 UDP 监听端口。
+- 默认值：`6881-6999`
+
+可以使用 `,` 指定多个端口，例如：`6881,6885`。
+您还可以使用 `-` 指定范围：`6881-6999`。
+`,` 和 `-` 可以一起使用。
+
+:::caution
+
+请确保已打开为传入 UDP 流量指定的端口。
+
+:::
+<br /><br />
+
+
+
+
+#### <CMD>--dht-message-timeout=<SEC\></CMD> {#--dht-message-timeout}
+
+- 设置 DHT 信息超时（以秒为单位）。
+- 默认值：`10`
+
+<br /><br />
+
+
+
+
+#### <CMD>--enable-dht [true|false]</CMD> {#--enable-dht}
+
+- 启用 IPv4 DHT 功能。
+- 默认值：`true`
+
+它还支持启用 UDP Tracker。
+如果在种子中设置了私有标志，则即使给定了 `true`，Aria2 也不会在该下载中使用 DHT。
+<br /><br />
+
+
+
+
+#### <CMD>--enable-dht6 [true|false]</CMD> {#--enable-dht6}
+- 启用 IPv6 DHT 功能。
+
+如果在种子中设置了私有标志，则即使给定了 `true`，Aria2 也不会在该下载中使用 DHT。
+使用 [`--dht-listen-port`](#--dht-listen-port) 选项指定要监听的端口号。
+另请参阅 [`--dht-listen-addr6`](#--dht-listen-addr6) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>--enable-peer-exchange [true|false]</CMD> {#--enable-peer-exchange}
+
+- 启用 Peer 交换扩展。
+- 默认值：`true`
+
+如果在种子中设置了私有标志，则即使给定 `true`，也会在该下载中禁用此功能。
+<br /><br />
+
+
+
+
+#### <CMD>--follow-torrent=true|false|mem</CMD> {#--follow-torrent}
+
+- 解析下载的 `.torrent` 文件。
+- 默认值：`true`
+
+如果指定了 `true` 或 `mem`，则当下载后缀为 `.torrent`
+或内容类型为 `application/x-bittorrent` 的文件时，Aria2 会将其解析为种子文件并下载其中提到的文件。
+
+如果指定了 `mem`，则种子文件不会写入磁盘，只是保存在内存中。
+
+如果指定 `false`，则 `.torrent` 文件将下载到磁盘，但不会解析为种子，也不会下载其内容。
+<br /><br />
+
+
+
+
+#### <CMD>-O, --index-out=<INDEX\>=<PATH\></CMD> {#--index-out}
+
+- 指定 BitTorrent 下载中部分文件的输出路径。
+
+添加 `INDEX` 文件索引，为 `INDEX` 指定的文件设置路径。
+您可以使用 [`--show-files`](#--show-files) 选项找到文件索引。
+`PATH` 是 [`--dir`](#--dir) 选项中指定的路径的相对路径。
+
+您可以多次使用此选项。
+使用此选项，您可以指定 BitTorrent 下载的输出文件名。
+<br /><br />
+
+
+
+
+#### <CMD>--listen-port=<PORT\>...</CMD> {#--listen-port}
+
+- 为 BitTorrent 下载设置 TCP 端口号。
+- 默认值：`6881-6999`
+
+可以使用 `,` 指定多个端口，例如：`6881,6885`。
+您还可以使用 `-` 指定范围：`6881-6999`。
+`,` 和 `-` 可以一起使用，例如：`6881-6889,6999`。
+
+:::caution
+
+请确保已打开为传入 TCP 流量指定的端口。
+
+:::
+<br /><br />
+
+
+
+
+#### <CMD>--max-overall-upload-limit=<SPEED\></CMD> {#--max-overall-upload-limit}
+
+- 设置最大整体上传速度（以字节/秒为单位）。
+- 默认值：`0`
+
+`0` 表示不受限制。
+您可以附加 `K` 或 `M` **（1K = 1024，1M = 1024K）**。
+要限制每个种子的上传速度，请使用 [`--max-upload-limit`](#--max-upload-limit) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>-u, --max-upload-limit=<SPEED\></CMD> {#--max-upload-limit}
+
+- 设置每个种子的最大上传速度（以字节/秒为单位）。
+- 默认值：`0`
+
+`0` 表示无限制。
+您可以附加 `K` 或 `M` **（1K = 1024，1M = 1024K）**。
+要限制整体上传速度，请使用 [`--max-overall-upload-limit`](#--max-overall-upload-limit) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>--peer-id-prefix=<PEER_ID_PREFIX\></CMD> {#--peer-id-prefix}
+
+- 指定 Peer ID 的前缀。
+- 默认值：`A2-$MAJOR-$MINOR-$PATCH-`
+
+BitTorrent 中的对等 ID 长度为 20 字节。
+如果指定的字节超过 20 个，则仅使用前 20 个字节。
+如果指定的字节小于 20 个字节，则添加随机字节数据以使其长度为 20 个字节。
+
+`$MAJOR`、`$MINOR` 和 `$PATCH` 分别替换为主要版本号、次要版本号和补丁版本号。
+例如，Aria2 版本 1.18.8 的前缀 ID 为 `A2-1-18-8-`。
+<br /><br />
+
+
+
+
+#### <CMD>--peer-agent=<PEER_AGENT\></CMD> {#--peer-agent}
+
+- 指定 BitTorrent 扩展握手期间 Peer 客户端版本使用的字符串。
+- 默认值：`aria2/$MAJOR.$MINOR.$PATCH`
+
+`$MAJOR`、`$MINOR` 和 `$PATCH` 分别替换为主要版本号、次要版本号和补丁版本号。
+例如，Aria2 版本 1.18.8 具有 Peer 代理 `aria2/1.18.8`。
+<br /><br />
+
+
+
+
+#### <CMD>--seed-ratio=<RATIO\></CMD> {#--seed-ratio}
+
+- 指定做种分享率。
+- 默认值：`1.0`
+
+当分享率达到指定值时，完成做种任务。
+强烈建议您在此处指定的值大于或等于 `1.0`。
+如果打算执行做种，而不考虑分享率，请指定 `0.0`。
+如果将 [`--seed-time`](#--seed-time) 选项与此选项一起指定，则当至少满足其中一个条件时，完成做种任务。
+<br /><br />
+
+
+
+
+
+#### <CMD>--seed-time=<MINUTES\></CMD> {#--seed-time}
+
+- 以分钟（小数形式）为单位指定做种时间。
+
+指定 `--seed-time=0` 会在下载完成后禁止做种。
+另请参阅 [`--seed-ratio`](#--seed-ratio) 选项。
+<br /><br />
+
+
+
+
+
+#### <CMD>-T, --torrent-file=<TORRENT_FILE\></CMD> {#--torrent-file}
+
+- 指定 `.torrent` 文件的路径。
+
+您不需要使用此选项，因为您可以在指定 `.torrent` 文件名时添加路径。
+<br /><br />
+
+
+
+
+### Metalink 特定选项
+
+#### <CMD>--follow-metalink=true|false|mem</CMD> {#--follow-metalink}
+
+- 解析下载的 `.metalink` 文件。
+- 默认值：`true`
+
+如果指定了 `true` 或 `mem`，则当下载后缀为 `.meta4` 或 `.metalink`
+或内容类型为 `application/metalink4+xml` 或 `application/metalink+xml` 的文件时，
+Aria2 会将其解析为 Metalink 文件并下载其中提到的文件。
+
+如果指定了 `mem`，则 `.metalink` 文件不会写入磁盘，而只是保存在内存中。
+
+如果指定了 `false`，则 `.metalink` 文件将下载到磁盘，但不会解析为 Metalink 文件，也不会下载其内容。
+<br /><br />
+
+
+
+
+#### <CMD>--metalink-base-uri=<URI\></CMD> {#--metalink-base-uri}
+
+- 解析本地 Metalink 文件。
+
+指定基本 URI 以解析存储在本地磁盘中的 Metalink 文件中的 `metalink:url` 和 `metalink:metaurl` 元素中的相对 URI。
+如果 URI 指向目录，则 URI 必须以 `/` 结尾。
+<br /><br />
+
+
+
+
+#### <CMD>-M, --metalink-file=<METALINK_FILE\></CMD> {#--metalink-file}
+
+- 设置`.meta4` 和 `.metalink` 文件的文件路径。
+
+指定 `-` 时从 `stdin` 读取输入。
+您不需要使用此选项，因为您可以在指定 `.metalink` 文件名时添加路径。
+<br /><br />
+
+
+
+
+#### <CMD>--metalink-language=<LANGUAGE\></CMD> {#--metalink-language}
+
+- 下载的文件的语言。
+
+<br /><br />
+
+
+
+
+
+#### <CMD>--metalink-location=<LOCATION\>[,...]</CMD> {#--metalink-location}
+
+- 首选服务器的位置。
+
+可以接受以逗号分隔的位置列表，例如 `jp,us`。
+<br /><br />
+
+
+
+
+
+#### <CMD>--metalink-os=<OS\></CMD> {#--metalink-os}
+
+- 要下载的文件的操作系统。
+
+<br /><br />
+
+
+
+
+
+#### <CMD>--metalink-version=<VERSION\></CMD> {#--metalink-version}
+
+- 要下载的文件的版本。
+
+<br /><br />
+
+
+
+
+
+#### <CMD>--metalink-preferred-protocol=<PROTO\></CMD> {#--metalink-preferred-protocol}
+
+- 指定首选协议。
+- 默认值：`none`
+
+可用的值有 `http`，`https`，`ftp` 和 `none`。
+指定 `none` 以禁用此功能。
+<br /><br />
+
+
+
+
+
+#### <CMD>--metalink-enable-unique-protocol [true|false]</CMD> {#--metalink-enable-unique-protocol}
+
+- 启用 Metalink 多协议。
+- 默认值：`true`
+
+如果给定 `true` 并且 Metalink 文件中的镜像有多个协议可用，则 Aria2 使用其中一个。
+使用 [`--metalink-preferred-protocol`](#--metalink-preferred-protocol) 选项指定协议的首选项。
+<br /><br />
+
+
+
+
+### RPC 选项
+
+#### <CMD>--enable-rpc [true|false]</CMD> {#--enable-rpc}
+
+- 启用 JSON-RPC/XML-RPC 服务器。
+- 默认值：`false`
+
+强烈建议使用 [`--rpc-secret`](#--rpc-secret) 选项设置机密授权令牌。
+另请参阅 [`--rpc-listen-port`](#--rpc-listen-port) 选项。
+<br /><br />
+
+
+
+
+
+#### <CMD>--pause [true|false]</CMD> {#--pause}
+
+- 在添加文件后暂停下载。
+- 默认值：`false`
+
+此选项仅在给定 `--enable-rpc=true` 时才有效。
+<br /><br />
+
+
+
+
+
+#### <CMD>--pause-metadata [true|false]</CMD> {#--pause-metadata}
+
+- 下载元数据后暂停文件下载。
+- 默认值：`false`
+
+Aria2 中有 3 种类型的元数据下载：
+
+1. 下载 `.torrent` 文件。
+2. 使用磁力链接下载种子元数据。
+3. 下载 `.metalink` 文件。
+
+这些元数据下载将根据类型使用其元数据进行下载。
+此选项将暂停这些后续下载。
+此选项仅在给定 `--enable-rpc=true` 时才有效。
+<br /><br />
+
+
+
+
+
+#### <CMD>--rpc-allow-origin-all [true|false]</CMD> {#--rpc-allow-origin-all}
+
+- 将值为 `*` 的 Access-Control-Allow-Origin 标头字段添加到 RPC 响应。
+- 默认值：`false`
+
+<br /><br />
+
+
+
+
+
+#### <CMD>--rpc-certificate=<FILE\></CMD> {#--rpc-certificate}
+
+- 使用 RPC 服务器的 `FILE` 中的证书。
+
+证书必须采用 PKCS12（`.p12`、`.pfx`）或 PEM 格式。
+
+PKCS12 文件必须包含证书、密钥和可选的附加证书链。
+只能打开导入密码为空的 PKCS12 文件！
+
+使用 PEM 时，还必须通过 [`--rpc-private-key`](#--rpc-private-key) 指定私钥。
+使用 [`--rpc-secure`](#--rpc-secure) 选项启用加密。
+
+:::caution
+
+WinTLS 目前不支持 PEM 文件。
+用户必须使用 PKCS12 文件。
+
+AppleTLS 用户应使用 “KeyChain Access” 实用工具首先生成自签名 SSL 服务器证书（例如使用向导），
+然后从该新证书对应的 “信息” 对话框中获取 SHA-1 指纹。
+要使用 [`--rpc-secure`](#--rpc-secure) 启动 `aria2c`，请使用 `--rpc-certificate=<SHA-1>`。
+另外也支持使用 PKCS12 文件，但是不支持 PEM 文件。
+
+:::
+<br /><br />
+
+
+
+
+
+#### <CMD>--rpc-listen-all [true|false]</CMD> {#--rpc-listen-all}
+
+- 在所有网络接口上侦听传入的 JSON-RPC/XML-RPC 请求。
+- 默认值：`false`
+
+如果给出 `false`，则仅侦听本地环回接口。
+<br /><br />
+
+
+
+
+
+#### <CMD>--rpc-listen-port=<PORT\></CMD> {#--rpc-listen-port}
+
+- 指定 JSON-RPC/XML-RPC 服务器要侦听的端口号。
+- 默认值：`6800`
+
+取值范围：`1024`-`65535` 
+<br /><br />
+
+
+
+
+
+#### <CMD>--rpc-max-request-size=<SIZE\></CMD> {#--rpc-max-request-size}
+
+- 设置 JSON-RPC/XML-RPC 请求的最大大小。
+- 默认值：`2M`
+
+如果 Aria2 检测到请求超过 `SIZE` 字节，则会断开连接。
+<br /><br />
+
+
+
+
+
+#### <CMD>--rpc-passwd=<PASSWD\></CMD> {#--rpc-passwd}
+
+- 设置 JSON-RPC/XML-RPC 密码。
+
+:::caution
+
+[`--rpc-passwd`](#--rpc-passwd) 选项将在将来的版本中被弃用。
+请尽快迁移到 [`--rpc-secret`](#--rpc-secret) 选项。
+
+:::
+<br /><br />
+
+
+
+
+
+#### <CMD>--rpc-private-key=<FILE\></CMD> {#--rpc-private-key}
+
+- 为 RPC 服务器使用 `FILE` 中的私钥。
+
+私钥必须解密并采用 PEM 格式。
+使用 [`--rpc-secure`](#--rpc-secure) 选项启用加密。
+另请参阅 [`--rpc-certificate`](#--rpc-certificate) 选项。
+<br /><br />
+
+
+
+
+
+#### <CMD>--rpc-save-upload-metadata [true|false]</CMD> {#--rpc-save-upload-metadata}
+
+- 将上传的种子或 Metalink 元数据保存在 [`--dir`](#--dir) 选项指定的目录中。
+- 默认值：`true`
+
+文件名由元数据的 SHA-1 哈希十六进制字符串加上扩展名组成。
+对于种子，扩展名为 `.torrent`。
+对于 Metalink，它是 `.meta4`。
+如果此选项为 `false`，则 [`aria2.addTorrent()`](#aria2.addTorrent) 或
+[`aria2.addMetalink()`](#aria2.addMetalink) 添加的下载将不会通过 [`--save-session`](#--save-session) 选项保存。
+<br /><br />
+
+
+
+
+
+#### <CMD>--rpc-secret=<TOKEN\></CMD> {#--rpc-secret}
+
+- 设置 RPC 机密授权令牌。
+
+阅读 [RPC 授权机密令牌](#rpc-授权机密令牌)以了解此选项值的使用方式。
+<br /><br />
+
+
+
+
+
+#### <CMD>--rpc-secure [true|false]</CMD> {#--rpc-secure}
+
+- 设置 RPC 加密。
+
+RPC 传输将通过 SSL/TLS 进行加密。
+RPC 客户端必须使用 HTTPS 方案来访问服务器。
+对于 WebSocket 客户端，请使用 WSS 方案。
+使用 [`--rpc-certificate`](#--rpc-certificate) 和
+[`--rpc-private-key`](#--rpc-private-key) 选项指定服务器证书和私钥。
+<br /><br />
+
+
+
+
+
+#### <CMD>--rpc-user=<USER\></CMD> {#--rpc-user}
+
+- 设置 JSON-RPC/XML-RPC 用户名。
+
+:::caution
+
+[`--rpc-user`](#--rpc-user) 选项将在将来的版本中弃用。
+尽快迁移到 [`--rpc-secret`](#--rpc-secret) 选项。
+
+:::
+<br /><br />
+
+
+
+
+
+
+### 高级选项
+
+#### <CMD>--allow-overwrite [true|false]</CMD> {#--allow-overwrite}
+
+- 如果对应的控制文件不存在，则重新从头开始下载。
+- 默认值：`false`
+
+另请参阅 [`--auto-file-renaming`](#--auto-file-renaming) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>--allow-piece-length-change [true|false]</CMD> {#--allow-piece-length-change}
+
+- 允许片段长度不同。
+- 默认值：`false`
+
+如果给出 `false`，则当一段长度与控制文件中的长度不同时，Aria2 将中止下载。
+如果给出 `true`，下载将继续，但会丢失一些下载进度。
+<br /><br />
+
+
+
+
+#### <CMD>--always-resume [true|false]</CMD> {#--always-resume}
+
+- 始终恢复下载。
+- 默认值：`true`
+
+如果给出 `true`，Aria2 总是尝试恢复下载；如果无法恢复，则中止下载。
+如果给出 `false`，当所有给定的 URI 都不支持恢复，
+或 Aria2 遇到 `N` 个不支持恢复的 URI
+（`N` 是使用 [`--max-resume-failure-tries`](#--max-resume-failure-tries) 选项指定的值）时，
+Aria2 将从头开始​​下载文件。
+<br /><br />
+
+
+
+
+#### <CMD>--async-dns [true|false]</CMD> {#--async-dns}
+
+- 启用异步 DNS。
+- 默认值：`true`
+
+<br /><br />
+
+
+
+
+#### <CMD>--async-dns-server=<IPADDRESS\>[,...]</CMD> {#--async-dns-server}
+
+- 异步 DNS 解析器中使用的 DNS 服务器地址列表（使用逗号 `,` 分隔）。
+
+通常异步 DNS 解析器从 `/etc/resolv.conf` 中读取 DNS 服务器地址。
+当添加此选项时，它将使用选项中指定的 DNS 服务器，而不是 `/etc/resolv.conf` 中的服务器。
+您可以同时指定 IPv4 和 IPv6 地址。
+当系统没有 `/etc/resolv.conf` 并且用户没有创建它的权限时，此选项很有用。
+<br /><br />
+
+
+
+
+#### <CMD>--auto-file-renaming [true|false]</CMD> {#--auto-file-renaming}
+
+- 如果相同的文件已存在，则自动重命名文件。
+- 默认值：`true`
+
+此选项仅适用于 HTTP(S)/FTP 下载。
+新文件名是在文件扩展名之前（如果有）附加一个点和一个数字（1..9999）。
+<br /><br />
+
+
+
+
+#### <CMD>--auto-save-interval=<SEC\></CMD> {#--auto-save-interval}
+
+- 每 `SEC` 秒保存一下控制文件 （`*.aria2`）。
+- 默认值：`60`
+
+如果给出 `0`，则在下载期间不保存控制文件。
+Aria2 在停止时不管值是多少都会保存一个控制文件。
+可用的值介于 `0` 到 `600` 之间。
+<br /><br />
+
+
+
+
+
+#### <CMD>--conditional-get [true|false]</CMD> {#--conditional-get}
+
+- 仅当本地文件早于远程文件时才下载文件。
+- 默认值：`false`
+
+此功能仅适用于 HTTP(S) 下载。
+如果在 Metalink 中指定了文件大小，则此功能不起作用。
+它还会忽略 Content-Disposition 标头。
+如果存在控制文件，此选项将被忽略。
+此函数使用 If-Modified-Since 标头有条件地仅获取较新的文件。
+获取本地文件的修改时间时，它使用用户提供的文件名（如果指定了 [`--out`](#--out) 选项）或 URI 中的文件名部分。
+要覆盖现有文件，则需要 [`--allow-overwrite`](#--allow-overwrite)。
+<br /><br />
+
+
+
+
+
+#### <CMD>--conf-path=<PATH\></CMD> {#--conf-path}
+
+- 将配置文件路径更改为 PATH。
+- 默认值：`$HOME/.aria2/aria2.conf`
+
+如果默认值不存在，则使用 `$XDG_CONFIG_HOME/aria2/aria2.conf`。
+<br /><br />
+
+
+
+
+
+#### <CMD>--console-log-level=<LEVEL\></CMD> {#--console-log-level}
+
+- 将日志级别设置为输出到控制台。
+- 默认值：`notice`
+
+`LEVEL` 可用值有：`debug`、`info`、`notice`、`warn`、`error`。
+<br /><br />
+
+
+
+
+
+#### <CMD>--content-disposition-default-utf8 [true|false]</CMD> {#--content-disposition-default-utf8}
+
+- 将 Content-Disposition 标头中引用的字符串处理为 UTF-8 而不是 ISO-8859-1。
+- 默认值：`false`
+
+例如文件名参数，但不是扩展版本文件名 \*。
+<br /><br />
+
+
+
+
+
+#### <CMD>-D, --daemon [true|false]</CMD> {#--daemon}
+
+- 作为守护进程运行。
+- 默认值：`false`
+
+当前工作目录将更改为 `/`，同时标准输入、标准输出和标准错误将重定向到 `/dev/null`。
+<br /><br />
+
+
+
+
+
+#### <CMD>--deferred-input [true|false]</CMD> {#--deferred-input}
+
+- 延期读取输入。
+- 默认值：`false`
+
+如果给出 `true`，Aria2 不会在启动时从 [`--input-file`](#--input-file) 选项指定的文件中读取所有 URI 和选项，
+而是在稍后需要时逐一读取。
+如果输入文件包含大量要下载的 URI，这可能会减少内存使用量。
+如果给出 `false`，Aria2 会在启动时读取所有 URI 和选项。
+
+:::caution
+
+与 [`--save-session`](#--save-session) 一起使用时， [`--deferred-input`](#--deferred-input) 选项将被禁用。
+
+:::
+<br /><br />
+
+
+
+
+
+#### <CMD>--disable-ipv6 [true|false]</CMD> {#--disable-ipv6}
+
+- 禁用 IPv6。
+- 默认值：`false`
+
+如果您必须使用损坏的 DNS 并希望避免极其缓慢的 AAAA 记录查找，这将很有用。
+<br /><br />
+
+
+
+
+
+#### <CMD>--disk-cache=<SIZE\></CMD> {#--disk-cache}
+
+- 设置磁盘缓存大小。
+- 默认值：`16M`
+
+如果 SIZE 为 `0`，则禁用磁盘缓存。
+此功能会将下载的数据缓存在内存中，内存最多增长到 `SIZE` 字节。
+缓存存储是为 Aria2 实例创建的，并由所有下载共享。
+磁盘缓存可以减少磁盘 I/O，因为数据以更大的单元写入，并且根据文件的偏移量重新排序。
+如果涉及哈希校验，并且数据缓存在内存中，就不需要从磁盘中读取它们。
+`SIZE` 可以包括 `K` 或 `M` **（1K = 1024，1M = 1024K）**。
+<br /><br />
+
+
+
+
+
+#### <CMD>--download-result=<OPT\></CMD> {#--download-result}
+
+- 此选项更改 `Download Results` 的格式设置方式。
+- 默认：`default`
+
+如果 `OPT` 设置为 `default`，则打印 GID、状态、平均下载速度、路径或 URI。
+如果涉及多个文件，则打印第一个请求文件的路径或 URI，并省略其余的。
+
+如果 OPT 设置为 `full`，则打印 GID、状态、平均下载速度、进度百分比、路径或 URI。
+在每一行中为每个请求的文件打印进度百分比、路径或 URI。
+
+如果 OPT 设置为 `hide`，则 `Download Results` 是隐藏的。
+<br /><br />
+
+
+
+
+
+#### <CMD>--dscp=<DSCP\></CMD> {#--dscp}
+
+- 为 QoS 在 BitTorrent 流量的传出 IP 数据包中设置 DSCP 值。
+
+该参数只设置 IP 数据包 TOS 字段中的 DSCP 位，而不是整个字段。
+如果您从 `/usr/include/netinet/ip.h` 中获取值，则将它们除以 4（否则值将不正确。例如，您的 `CS1` 类将变成 `CS4`）。
+如果您从 RFC、网络供应商的文档、维基百科或任何其他来源获取常用值，请按原样使用它们。
+<br /><br />
+
+
+
+
+
+#### <CMD>--rlimit-nofile=<NUM\></CMD> {#--rlimit-nofile}
+
+- 设置打开文件描述符的软限制。
+
+此打开仅在以下情况有效：
+
+1. 当前系统支持（POSIX）
+2. 该限制不超过硬限制。
+3. 指定的限制大于当前的软限制。
+
+这相当于通过 ulimit 设置 nofile，只是它永远不会减少限制。
+此选项仅在支持 rlimit API 的系统上可用。
+<br /><br />
+
+
+
+
+
+#### <CMD>--enable-color [true|false]</CMD> {#--enable-color}
+
+- 允许在终端彩色输出。
+- 默认值：`true`
+
+<br /><br />
+
+
+
+
+
+#### <CMD>--enable-mmap [true|false]</CMD> {#--enable-mmap}
+
+- 将文件映射到内存中。
+- 默认值：`false`
+
+如果文件空间未预先分配，则此选项可能不起作用。
+请参阅 [`--file-allocation`](#--file-allocation)。
+<br /><br />
+
+
+
+
+
+#### <CMD>--event-poll=<POLL\></CMD>  {#--event-poll}
+
+- 指定轮询事件的方法。
+
+可能的值是 `epoll`、`kqueue`、`port`、`poll` 和 `select`。
+对于每个 `epoll`、`kqueue`、`port` 和 `poll`，如果系统支持，它是可用的。
+`epoll` 在最近的 Linux 上可用。
+`kqueue` 在包括 Mac OS X 在内的各种 *BSD 系统上可用。
+`port` 在 Open Solaris 上可用。
+该选项的默认值可能因您使用的系统而异。
+<br /><br />
+
+
+
+
+
+#### <CMD>--file-allocation=<METHOD\></CMD>  {#--file-allocation}
+
+- 指定文件分配方法。
+- 默认值：`prealloc`
+
+`none` 不预先分配文件空间。
+
+`prealloc` 在下载开始前预先分配文件空间。
+这可能需要一些时间，具体取决于文件的大小。
+
+如果您使用较新的文件系统，例如 ext4（具有扩展支持）、btrfs、xfs 或 NTFS（仅限 MinGW 构建），`falloc` 是您的最佳选择。
+它几乎立即分配大（几 GiB）文件。
+不要将 `falloc` 用在旧文件系统（如 ext3 和 FAT32）上，因为它花费的时间几乎与 `prealloc` 相同，并且它会完全阻塞 Aria2 直到分配完成。
+如果您的系统没有 `posix_fallocate(3)` 函数，则 `falloc` 可能不可用。
+
+`trunc` 使用 `ftruncate(2)` 系统调用或特定于平台的对应项将文件截断到指定长度。
+
+:::caution
+
+使用 `trunc` 看似分配磁盘空间很快，但实际上是在文件系统中设置文件长度元数据，根本不分配磁盘空间。
+这意味着它无助于避免碎片化。
+
+在多文件种子下载中，与指定文件相邻的前向文件如果共享同一块空间，那么也会被分配。
+
+:::
+<br /><br />
+
+
+
+
+#### <CMD>--force-save [true|false]</CMD>  {#--force-save}
+
+- 使用 [`--save-session`](#--save-session) 选项保存下载，即使下载已完成或已删除。
+- 默认值：`false`
+
+在这种情况下，此选项还会保存控制文件。
+这可能有助于保存被识别为完成状态的 BitTorrent 播种。
+<br /><br />
+
+
+
+
+#### <CMD>--save-not-found [true|false]</CMD>  {#--save-not-found}
+
+- 即使在服务器上找不到文件，也可以使用 [`--save-session`](#--save-session) 选项保存下载。
+- 默认值：`true`
+
+在这种情况下，此选项还会保存控制文件。
+<br /><br />
+
+
+
+
+#### <CMD>--gid=<GID\></CMD>  {#--gid}
+
+- 手动设置 GID。
+
+Aria2 通过称为 GID 的 ID 来标识每个下载。
+GID 必须是 16 个字符的十六进制字符串，因此允许使用 [0-9a-fA-F] 并且不得去除前导零。
+全 0 的 GID 是保留的，不得使用。
+GID必须唯一，否则报错，无法添加下载。
+当恢复使用 [`--save-session`](#--save-session) 选项保存的会话时，此选项很有用。
+如果不使用此选项，新的 GID 将由 Aria2 自动生成。
+<br /><br />
+
+
+
+
+#### <CMD>--hash-check-only [true|false]</CMD>  {#--hash-check-only}
+
+- 只校验哈希。
+- 默认值：`false`
+
+如果给出 `true`，则在使用 [`--check-integrity`](#--check-integrity) 选项进行哈希检查后，无论下载是否完成都中止下载。
+<br /><br />
+
+
+
+
+#### <CMD>--human-readable [true|false]</CMD>  {#--human-readable}
+
+- 在控制台显示的可读数据中以人类可读格式（例如 1.2Ki、3.4Mi）打印文件大小和传输速度。
+- 默认值：`true`
+
+<br /><br />
+
+
+
+
+#### <CMD>--interface=<INTERFACE\></CMD>  {#--interface}
+
+- 将套接字绑定到给定的接口。
+- 可用的值：接口、IP 地址、主机名
+
+您可以指定接口名称、IP 地址和主机名。
+
+:::caution
+
+如果接口有多个地址，强烈建议明确指定 IP 地址。
+另请参阅 [`--disable-ipv6`](#--disable-ipv6)。
+
+如果您的系统没有 `getifaddrs(3)`，则此选项不接受接口名称。
+
+:::
+<br /><br />
+
+
+
+
+#### <CMD>--keep-unfinished-download-result [true|false]</CMD>  {#--keep-unfinished-download-result}
+
+- 保留未完成的下载结果，即使超过 [`--max-download-result`](#--max-download-result) 的限制也这样做。
+- 默认值：`true`
+
+如果必须将所有未完成的下载保存在会话文件中（请参阅 [`--save-session`](#--save-session) 选项），这将很有用。
+请记住，要保留的未完成下载结果的数量没有上限。
+如果不需要，请关闭此选项。
+<br /><br />
+
+
+
+
+#### <CMD>--max-download-result=<NUM\></CMD>  {#--max-download-result}
+
+- 设置保存在内存中的下载结果的最大数量。
+- 默认值：`1000`
+
+下载结果有 完成/错误/删除 下载。
+下载结果存储在 FIFO 队列中，最多可存储 `NUM` 个下载结果。
+当队列已满又创建了新的下载结果时，最旧的下载结果从队列的前面移除，新的下载结果从后面进入。
+
+在此选项中设置较大的数字可能会导致数千次下载后的高内存消耗。
+指定 `0` 表示不保留下载结果。
+请注意，无论此选项值如何，未完成的下载都会保留在内存中。
+请参阅 [`--keep-unfinished-download-result`](#--keep-unfinished-download-result) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>--max-mmap-limit=<SIZE\></CMD>  {#--max-mmap-limit}
+
+- 设置最大文件大小以启用 mmap（请参阅 [`--enable-mmap`](#--enable-mmap) 选项）。
+- 默认值：`9223372036854775807`
+
+文件大小由一次下载中包含的所有文件的总和决定。
+例如，如果下载包含 5 个文件，则文件大小是这些文件的总大小。
+如果文件大小严格大于此选项中指定的大小，mmap 将被禁用。
+<br /><br />
+
+
+
+
+#### <CMD>--max-resume-failure-tries=<N\></CMD>  {#--max-resume-failure-tries}
+
+- 设置尝试恢复下载的最大 URI 数量。
+- 默认值：`0`
+
+当与 `--always-resume=false` 一起使用时，当 Aria2 检测到 `N` 个不支持恢复下载的 URI 时，Aria2 会从头开始下载文件。
+如果指定为 `0`，当所有给定的 URI 都不支持恢复时，Aria2 从头开始​​下载文件。
+请参阅 [`--always-resume`](#--always-resume) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>--min-tls-version=<VERSION\></CMD>  {#--min-tls-version}
+
+- 指定要启用的最低 SSL/TLS 版本。
+- 默认值：`TLSv1.2`
+
+可用的值：`TLSv1.1`、`TLSv1.2`、`TLSv1.3` 
+<br /><br />
+
+
+
+
+#### <CMD>--multiple-interface=<INTERFACES\></CMD>  {#--multiple-interface}
+
+- 将套接字绑定到接口列表（以逗号 `,` 分隔）。
+- 可用的值：接口、IP 地址、主机名
+
+请求将在接口之间拆分以实现链路聚合。
+您可以指定接口名称、IP 地址和主机名。
+如果使用了 [`--interface`](#--interface)，这个选项将被忽略。
+<br /><br />
+
+
+
+
+#### <CMD>--log-level=<LEVEL\></CMD>  {#--log-level}
+
+- 设置输出的日志级别。
+- 默认值：`debug`
+
+`LEVEL` 的可用值有：`debug`、`info`、`notice`、`warn`、`error`。
+<br /><br />
+
+
+
+
+#### <CMD>--on-bt-download-complete=<COMMAND\></CMD>  {#--on-bt-download-complete}
+
+- 此选项设置 BitTorrent 要在下载完成后但在播种前执行的命令。
+- 有效值格式：`/path/to/command`
+
+另一方面，要在下载完成且播种结束后调用指定的命令，请使用 [`--on-download-complete`](#--on-download-complete)。
+有关 `COMMAND` 的更多详细信息，请参阅[事件钩子](#事件钩子)。
+<br /><br />
+
+
+
+
+#### <CMD>--on-download-complete=<COMMAND\></CMD>  {#--on-download-complete}
+
+- 设置下载完成后要执行的命令。
+- 有效值格式：`/path/to/command`
+
+有关 `COMMAND` 的更多详细信息，请参阅[事件钩子](#事件钩子)。
+另请参阅 [`--on-download-stop`](#--on-download-stop) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>--on-download-error=<COMMAND\></CMD>  {#--on-download-error}
+
+- 设置因下载错误而中止后要执行的命令。
+- 有效值格式：`/path/to/command`
+
+有关 `COMMAND` 的更多详细信息，请参阅[事件钩子](#事件钩子)。
+另请参阅 [`--on-download-stop`](#--on-download-stop) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>--on-download-pause=<COMMAND\></CMD>  {#--on-download-pause}
+
+- 设置下载暂停后要执行的命令。
+- 有效值格式：`/path/to/command`
+
+有关 `COMMAND` 的更多详细信息，请参阅[事件钩子](#事件钩子)。
+<br /><br />
+
+
+
+
+#### <CMD>--on-download-start=<COMMAND\></CMD>  {#--on-download-start}
+
+- 设置开始下载后要执行的命令。
+- 有效值格式：`/path/to/command`
+
+有关 `COMMAND` 的更多详细信息，请参阅[事件钩子](#事件钩子)。
+<br /><br />
+
+
+
+
+#### <CMD>--on-download-stop=<COMMAND\></CMD>  {#--on-download-stop}
+
+- 设置终止下载后要执行的命令。
+- 有效值格式：`/path/to/command`
+
+您可以使用 [`--on-download-complete`](#--on-download-complete) 和
+[`--on-download-error`](#--on-download-error) 覆盖为特定下载结果执行的命令。
+如果指定了这些选项，则不执行当前选项中指定的命令。
+有关 `COMMAND` 的更多详细信息，请参阅[事件钩子](#事件钩子)。
+<br /><br />
+
+
+
+
+#### <CMD>--optimize-concurrent-downloads [true|false|<A\>:<B\>]</CMD>  {#--optimize-concurrent-downloads}
+
+- 根据可用带宽优化并发下载数。
+- 默认值：`false`
+
+Aria2 使用之前下载中观察到的下载速度，根据规则 `N = A + B Log10`（速度以 Mbps 为单位）调整并行启动的下载数量。
+系数 `A` 和 `B` 可以在选项参数中自定义，`A` 和 `B` 用冒号分隔。
+默认值（A=5，B=25）在 1Mbps 网络上通常使用 5 个并行下载，在 100Mbps 网络上使用 50 个以上。
+并行下载的数量仍然受限于 [`--max-concurrent-downloads`](#--max-concurrent-downloads) 参数定义的最大值。
+<br /><br />
+
+
+
+
+#### <CMD>--piece-length=<LENGTH\></CMD>  {#}
+
+- 为 HTTP/FTP 下载设置片段长度。
+- 默认值：`1M`
+
+这是 Aria2 拆分文件时的边界。
+所有拆分都遵循这个长度的倍数。
+在 BitTorrent 下载中将忽略此选项。
+如果 Metalink 文件包含片段哈希，那么它也会被忽略。
+
+:::info
+
+[`--piece-length`](#--piece-length) 选项的可用情况是更改一个 HTTP 流水线请求中的请求范围。
+要启用 HTTP 管道，请使用 [`--enable-http-pipelining`](#--enable-http-pipelining)。
+
+:::
+<br /><br />
+
+
+
+
+#### <CMD>--show-console-readout [true|false]</CMD>  {#--show-console-readout}
+
+- 显示控制台可读数据。
+- 默认值：`true`
+
+<br /><br />
+
+
+
+
+#### <CMD>--stderr [true|false]</CMD>  {#--stderr}
+
+- 将所有将在 stdout 中打印的控制台输出重定向到 `stderr`。
+- 默认值：`false`
+
+<br /><br />
+
+
+
+
+#### <CMD>--summary-interval=<SEC\></CMD>  {#--summary-interval}
+
+- 以秒为单位设置输出下载进度摘要的时间间隔。
+- 默认值：`60`
+
+设置为 `0` 会抑制输出。
+<br /><br />
+
+
+
+
+#### <CMD>-Z, --force-sequential [true|false]</CMD>  {#--force-sequential}
+
+- 强制按顺序下载。
+- 默认值：`false`
+
+在命令行中按顺序获取 URI，并在单独的会话中下载每个 URI，就像普通的命令行下载工具那样。
+<br /><br />
+
+
+
+
+#### <CMD>--max-overall-download-limit=<SPEED\></CMD>  {#--max-overall-download-limit}
+
+- 以字节/秒为单位设置最大整体下载速度。
+- 默认值：`0`
+
+`0` 表示不受限制。
+您可以附加 `K` 或 `M` **（1K = 1024，1M = 1024K）**。
+要限制每次下载的下载速度，请使用 [`--max-download-limit`](#--max-download-limit) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>--max-download-limit=<SPEED\></CMD>  {#--max-download-limit}
+
+- 以字节/秒为单位设置每次下载的最大下载速度。
+- 默认值：`0`
+
+`0` 表示不受限制。
+您可以附加 `K` 或 `M` **（1K = 1024，1M = 1024K）**。
+要限制整体下载速度，请使用 [`--max-overall-download-limit`](#--max-overall-download-limit) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>--no-conf [true|false]</CMD>  {#--no-conf}
+
+- 不加载 Aria2 配置文件。
+
+<br /><br />
+
+
+
+
+#### <CMD>--no-file-allocation-limit=<SIZE\></CMD>  {#--no-file-allocation-limit}
+
+- 对于大小小于 `SIZE` 的文件，不对其预分配空间。
+- 默认值：`5M`
+
+您可以附加 `K` 或 `M` **（1K = 1024，1M = 1024K）**。
+<br /><br />
+
+
+
+
+#### <CMD>-P, --parameterized-uri [true|false]</CMD>  {#--parameterized-uri}
+
+- 启用参数化 URI 支持。
+- 默认值：`false`
+
+您可以指定参数集：`http://{sv1,sv2,sv3}/foo.iso`。
+您还可以使用步长指定数字序列：`http://host/image[000-100:2].img`。
+步长可以省略。
+
+如果所有的 URI 都不指向同一个文件，例如上面的第二个例子，则需要启用 [`--force-sequential`](#--force-sequential) 选项。
+<br /><br />
+
+
+
+
+#### <CMD>-q, --quiet [true|false]</CMD>  {#--quiet}
+
+- 使 Aria2 安静运行（无控制台输出）。
+- 默认值：`false`
+
+<br /><br />
+
+
+
+
+#### <CMD>--realtime-chunk-checksum [true|false]</CMD> {#--realtime-chunk-checksum}
+
+- 如果提供了块校验和，则在下载文件时通过计算校验和来验证数据块。
+- 默认值：`true`
+
+<br /><br />
+
+
+
+
+#### <CMD>--remove-control-file [true|false]</CMD> {#--remove-control-file}
+
+- 下载前删除控制文件。
+
+与 `--allow-overwrite=true` 一起使用，下载总是从头开始。
+这对于禁用恢复的代理服务器之后的用户很有用。
+<br /><br />
+
+
+
+
+#### <CMD>--save-session=<FILE\></CMD> {#--save-session}
+
+- 退出时将错误/未完成的下载保存到文件。
+
+您可以在重新启动时使用 [`--input-file`](#--input-file) 选项将此输出文件传递给 Aria2c。
+如果您希望输出被 GZIP 压缩，请在文件名后附加一个 `.gz` 扩展名。
+请注意，通过 [`aria2.addTorrent()`](#aria2.addTorrent) 和
+[`aria2.addMetalink()`](#aria2.addMetalink) RPC 方法添加的下载以及元数据无法保存为文件的下载不会被保存。
+使用 [`aria2.remove()`](#aria2.remove) 和 [`aria2.forceRemove()`](#aria2.forceRemove) 删除的下载将不会保存。
+GID 也可用 [`--gid`](#--gid) 保存，但是有一些限制，见如下所述。
+
+:::info
+
+通常，下载会保存本身的 GID。但有些下载使用元数据（例如 BitTorrent 和 Metalink）。
+在这种情况下，有一些限制：
+
+> 磁力链接 URI，然后通过种子下载
+
+保存 BitTorrent 元数据下载的 GID。
+
+> 种子文件的 URI，然后通过种子下载
+
+保存种子文件下载的 GID。
+
+> Metalink 文件的 URI，然后通过 Metalink 文件中描述的文件下载
+
+保存 Metalink 文件下载的 GID。
+
+> 本地种子文件
+
+保存种子文件下载的 GID。
+
+> 本地 Metalink 文件
+
+不会保存任何有意义的 GID。
+
+:::
+<br /><br />
+
+
+
+
+#### <CMD>--save-session-interval=<SEC\></CMD> {#--save-session-interval}
+
+- 每 `SEC` 秒将错误/未完成的下载保存到 [`--save-session`](#--save-session) 选项指定的文件中。
+- 默认值：`0`
+
+如果给出 `0`，则只有在 Aria2 退出时才会保存文件。
+<br /><br />
+
+
+
+
+#### <CMD>--socket-recv-buffer-size=<SIZE\></CMD> {#--socket-recv-buffer-size}
+
+- 以字节为单位设置最大套接字接收缓冲区。
+- 默认值：`0`
+
+指定 `0` 将禁用此选项。
+该值将使用 `SO_RCVBUF` 套接字选项和 `setsockopt()` 调用设置为套接字文件描述符。
+<br /><br />
+
+
+
+
+#### <CMD>--stop=<SEC\></CMD> {#--stop}
+
+- `SEC` 秒后停止 Aria2 程序。
+- 默认值：`0`
+
+如果给出 `0`，则禁用此功能。
+<br /><br />
+
+
+
+
+#### <CMD>--stop-with-process=<PID\></CMD> {#--stop-with-process}
+
+- 当进程 PID 未运行时停止 Aria2 程序。
+
+如果 Aria2 进程是从父进程派生出来的，这很有用。
+父进程可以使用自己的 PID fork Aria2，当父进程由于某种原因退出时，Aria2 可以检测到它并自行关闭。
+<br /><br />
+
+
+
+
+#### <CMD> --truncate-console-readout [true|false]</CMD> {#--truncate-console-readout}
+
+- 截断控制台可读数据以调整适应一行。
+- 默认值：`true`
+
+<br /><br />
+
+
+
+
+#### <CMD> -v, --version</CMD> {#--version}
+
+- 打印版本号、版权和配置信息后退出。
+
+<br /><br />
+
+
+
+
+### 选项注释
+
+#### 选项参数
+
+选项中被方括号（[]）包围的参数是可选参数。
+通常省略参数被评估为`true`。
+如果您使用这些选项的缩写形式（例如 `-V`）并给出参数，则应将选项名称及其参数连接起来（例如 `-Vfalse`）。
+
+如果在选项名称和参数之间插入任何空格，则参数将被视为 URI，这通常不是您所期望的。
+<br /><br />
+
+
+
+#### 单位（K 和 M）
+
+有些选项用 `K` 和 `M` 来方便地分别表示 1024 和 1048576。
+Aria2 以不区分大小写的方式检测这些字符。
+换句话说，`k` 和 `m` 与 `K` 和 `M` 混用时，效果相同。
+<br /><br />
+
+
+
+
+### URI，磁力链接，种子文件，Metalink 文件
+
+您可以在命令行中指定多个 URI。
+除非指定 [`--force-sequential`](#--force-sequential) 选项，否则所有 URI 必须指向同一个文件，否则下载将失败。
+
+您可以指定任意数量的 BitTorrent Magnet URI。
+请注意，它们始终被视为单独的下载。
+支持十六进制编码的 40 个字符的 InfoHash 和 Base32 编码的 32 个字符的 InfoHash。
+支持多个 `tr` 参数。
+因为 BitTorrent Magnet URI 可能包含 `&` 字符，强烈建议始终使用单引号 `'` 或双引号 `"` 引用 URI。
+强烈建议启用 DHT，尤其是在缺少 `tr` 参数时。
+请参阅 [https:// www.bittorrent.org/beps/bep_0009.html](https://www.bittorrent.org/beps/bep_0009.html)
+有关 BitTorrent Magnet URI 的更多详细信息。
+
+您还可以指定任意数量的种子文件和 Metalink 文档存储在本地驱动器上。
+请注意，它们始终被视为单独的下载。支持 Metalink4 和 Metalink 3.0。
+
+您可以使用 [`--torrent-file`](#--torrent-file) 选项和 URI 指定种子文件。
+通过这样做，您可以同时从种子群和 HTTP(S)/FTP/SFTP 服务器下载文件，同时将来自 HTTP(S)/FTP/SFTP 的数据上传到种子群。
+对于单文件种子，URI 可以是指向资源的完整 URI，或者如果 URI 以 `/` 结尾，则添加种子文件中的名称。
+对于多文件种子，添加名称和路径以形成每个文件的 URI。
+
+:::caution
+
+如果 URI 包含 `&` 或任何在 shell 中具有特殊含义的字符，请确保使用单引号 `'` 或双引号 `"` 将其括起。
+
+:::
+<br /><br />
+
+
+
+### 恢复下载
+
+通常，如果先前的传输是由 Aria2 进行的，则只需发出相同的命令 `aria2c URI` 即可恢复传输。
+
+如果之前的传输是由浏览器或类似顺序下载管理器的 `wget` 进行的，则使用 [`--continue`](#--continue) 选项继续传输。
+<br /><br />
+
+
+
+
+### 事件钩子
+
+- Aria2 提供了在特定事件发生后指定任意命令的选项。
+
+当前提供以下选项：
+[`--on-bt-download-complete`](#--on-bt-download-complete)、[`--on-download-pause`](#--on-download-pause)、
+[`--on-download-complete`](#--on-download-complete)、[`--on-download-start`](#--on-download-start)、
+[`--on-download-error`](#--on-download-error)、[`--on-download-stop`](#--on-download-stop)。
+
+- Aria2 在执行时将 3 个参数传递给指定的命令。
+这些参数是：GID、文件数和文件路径。
+
+对于 HTTP、FTP 和 SFTP 下载，通常文件数为 `1`。
+BitTorrent 下载可以包含多个文件。
+如果文件数量多于一个，文件路径是第一个。
+换句话说，这是在 [`aria2.getFiles()`](#aria2.getFiles) RPC 方法的响应中选择的键为 `true` 的第一个结构的路径键的值。
+如果要获取所有文件路径，可以考虑使用 JSON-RPC/XML-RPC。
+请注意，由于重定向或 Content-Disposition 标头，文件路径可能会在 HTTP 下载期间发生变化。
+
+让我们看一个如何将参数传递给命令的示例：
+
+```shell {1,5}
+$ cat hook.sh
+#!/bin/sh
+echo "Called with [$1] [$2] [$3]"
+
+$ aria2c --on-download-complete hook.sh http://example.org/file.iso
+Called with [1] [1] [/path/to/file.iso]
+```
+<br /><br />
+
+
+
+
+## 退出状态
+
+由于 Aria2 可以一次处理多个下载，它在一个会话中遇到很多错误。
+Aria2 根据最后遇到的错误返回以下退出状态：
+
+0. 所有的下载都成功。
+
+1. 未知错误。
+
+2. 超时。
+
+3. 找不到资源。
+
+4. Aria2 收到指定数量的 “找不到资源” 错误。
+请参阅 [`--max-file-not-found`](#--max-file-not-found) 选项。
+
+5. 因下载速度太慢而中止下载。
+请参阅 [`--lowest-speed-limit`](#--lowest-speed-limit) 选项。
+
+6. 网络发生问题。
+
+7. 有未完成的下载。
+仅当所有**已完成的下载**都成功并且队列中有**未完成的下载**时，
+用户通过按 Ctrl-C 或发送 TERM 或 INT 信号退出 Aria2，才会报告此错误。
+
+8. 需要恢复才能完成下载，但远程服务器不支持恢复。
+
+9. 可用磁盘空间不足。
+
+10. 片段长度与 `.aria2` 控制文件中的片段长度不同。
+请参阅 [`--allow-piece-length-change`](#--allow-piece-length-change) 选项。
+
+11. Aria2 在同时刻正在下载相同的文件。
+
+12. Aria2 在同时刻正在下载相同 InfoHash 的种子。
+
+13. 文件已存在。
+请参阅 [`--allow-overwrite`](#--allow-overwrite) 选项。
+
+14. 重命名文件失败。
+请参阅 [`--auto-file-renaming`](#--auto-file-renaming) 选项。
+
+15. Aria2 无法打开已存在的文件。
+
+16. Aria2 无法创建新文件或截断现有文件。
+
+17. 文件输入/输出发生错误。
+
+18. Aria2 无法创建目录。
+
+19. 名称解析失败。
+
+20. Aria2 无法解析 Metalink 文档。
+
+21. FTP 命令失败。
+
+22. HTTP 响应标头错误或意外。
+
+23. 发生太多重定向。
+
+24. HTTP 授权失败。
+
+25. Aria2 无法解析 bencoded 文件（通常是 `.torrent` 文件）。
+
+26. `.torrent` 文件已损坏或缺少 Aria2 所需的信息。
+
+27. 失效的磁力链接 URI。
+
+28. 给出了错误/无法识别的选项或给出了意外的选项参数。
+
+29. 远程服务器由于临时过载或维护而无法处理请求。
+
+30. Aria2 无法解析 JSON-RPC 请求。
+
+31. 保留值，未使用。
+
+32. 校验和验证失败。
+
+:::caution
+
+已完成下载时发生的错误不会报告为退出状态。
+
+:::
+<br /><br />
+
+
+
+
+## 环境变量
+
+Aria2 能识别以下环境变量：
+
+- `http_proxy [http://][USER:PASSWORD@]HOST[:PORT]`
+
+指定用于 HTTP 的代理服务器。
+覆盖配置文件中的 `http-proxy` 值。
+命令行选项 [`--http-proxy`](#--http-proxy) 覆盖这个值。
+
+
+
+
+- `https_proxy [http://][USER:PASSWORD@]HOST[:PORT]`
+
+指定用于 HTTPS 的代理服务器。
+覆盖配置文件中的 `https-proxy` 值。
+命令行选项 [`--https-proxy`](#--https-proxy) 覆盖这个值。
+
+
+
+
+- `ftp_proxy [http://][USER:PASSWORD@]HOST[:PORT]`
+
+指定用于 FTP 的代理服务器。
+覆盖配置文件中的 `ftp-proxy` 值。
+命令行选项 [`--ftp-proxy`](#--ftp-proxy) 覆盖这个值。
+
+
+
+
+- `all_proxy [http://][USER:PASSWORD@]HOST[:PORT]`
+
+如果未指定特定协议的代理，请指定要使用的代理服务器。
+覆盖配置文件中的 `all-proxy` 值。
+命令行选项 [`--all-proxy`](#--all-proxy) 覆盖这个值。
+
+:::info
+
+尽管 Aria2 接受代理 URI 中的 `ftp://` 和 `https://` 方案，
+但它只是假设指定了 `http://` 并且不会根据指定的方案更改其行为。
+
+:::
+
+
+
+
+- `no_proxy [DOMAIN,...]`
+
+指定带或不带子网掩码的主机名、域和网络地址列表（以逗号 `,` 分隔），它们将不会使用代理。
+覆盖配置文件中的 `no-proxy` 值。
+命令行选项 [`--no-proxy`](#--no-proxy) 覆盖这个值。
+<br /><br />
+
+
+
+
+## 文件
+
+### aria2.conf
+
+默认情况下，Aria2 检查遗留路径 `$HOME/.aria2/aria2.conf` 是否存在，
+否则它解析 `$XDG_CONFIG_HOME/aria2/aria2.conf` 作为其配置文件。
+您可以使用 [`--conf-path`](#--conf-path) 选项指定配置文件的路径。
+如果不想使用配置文件，请使用 [`--no-conf`](#--no-conf) 选项。
+
+配置文件是一个文本文件，每行有一个选项。
+在每一行中，您可以指定 `NAME=VALUE` 对。
+其中名称是不带 `--` 前缀的长命令行选项名称。
+您可以对命令行选项使用相同的语法。
+以 `#` 开头的行会被视为注释：
+
+```shell showLineNumbers
+# sample configuration file for aria2c
+listen-port=60000
+dht-listen-port=60000
+seed-ratio=1.0
+max-upload-limit=50K
+ftp-pasv=true
+```
+
+:::info
+
+配置文件中可能包含用户名、密码等机密信息。
+建议更改配置文件的文件权限（例如 `chmod 600 aria2.conf`），这样其他用户就看不到文件的内容。
+
+:::
+
+像 `${HOME}` 这类环境变量由 Shell 扩展。
+这意味着配置文件中使用的那些变量不会被扩展。
+但是，`${HOME}` 在配置文件中引用用户的主目录以指定文件路径很有用。
+因此，Aria2 将在以下选项值中找到的 `${HOME}` 扩展到用户的主目录：
+
+:::info
+
+由于技术问题，该部分内容暂未实现。
+请前往[官方文档](https://aria2.github.io/manual/en/html/aria2c.html#aria2-conf)查看详情。
+
+:::
+
+请注意，即使在命令行中使用了上述选项，也会发生这种扩展。
+这意味着扩展可能会发生两次：首先是 Shell，然后是 `aria2c`。
+<br /><br />
+
+
+
+
+### dht.dat
+
+除非旧文件路径 `$HOME/.aria2/dht.dat` 和 `$HOME/.aria2/dht6.dat` 指向现有文件，
+否则 IPv4 DHT 的路由表将保存到路径 `$XDG_CACHE_HOME/aria2/dht.dat`
+和 IPv6 DHT 的路由表保存在路径 `$XDG_CACHE_HOME/aria2/dht6.dat` 中。
+<br /><br />
+
+
+
+
+### netrc
+
+HTTP(S)/FTP/SFTP 默认启用了 netrc 支持。
+要禁用 netrc 支持，请指定 [`--no-netrc`](#--no-netrc) 选项。
+您的 `.netrc` 文件应该具有正确的权限（`600`）。
+
+如果主机名称以 `.` 开头，Aria2 执行域名匹配而不是完全匹配。
+这是 Aria2 的扩展。
+例如域名匹配，假设有以下 `.netrc` 条目：
+
+```text
+machine .example.org login myid password mypasswd
+```
+
+`aria2.example.org` 域名匹配 `.example.org` 并使用 `myid` 和 `mypasswd`。
+
+下面是一些域名匹配示例：`example.net` 不与 `.example.org` 进行域名匹配。
+`example.org` 不与 `.example.org` 域名匹配，因为前面有 `.`。
+如果要匹配 `example.org`，请指定 `example.org`。
+<br /><br />
+
+
+
+
+### 控制文件
+
+Aria2 使用控制文件来跟踪下载进度。
+控制文件放置在与下载文件相同的目录下，其文件名是下载文件的文件名附加 `.aria2`。
+
+例如，如果您正在下载 `file.zip`，那么控制文件应该是 `file.zip.aria2`。
+（此命名约定有一个例外。
+如果您正在下载多种子，其控制文件是种子的 “顶级目录” 名称附加 `.aria2`。
+“顶级目录” 名称是 “名称” 键的值在 torrent 文件的 “信息” 目录中。）
+
+默认情况下，在下载完成时控制文件会被删除。
+如果 Aria2 判定无法恢复下载（例如，从不支持恢复的 HTTP 服务器下载文件时），则不会创建控制文件。
+
+通常，如果您丢失了控制文件，则无法恢复下载。
+但是，如果您有带有文件块校验和的种子或 Metalink，
+则可以在命令行中为 `aria2c` 提供 [`--check-integrity`](#--check-integrity) 选项来恢复下载。
+<br /><br />
+
+
+
+
+### 输入文件
+
+输入文件可以包含供 Aria2 下载的 URI 列表。
+您可以为单个实体指定多个 URI：使用**水平制表符**在一行中分隔 URI。
+
+每行都被视为在命令行参数中提供。
+因此它们受 [`--force-sequential`](#--force-sequential) 和
+[`--parameterized-uri`](#--parameterized-uri) 选项的影响。
+
+由于输入文件中的 URI 是由 Aria2 直接读取的，因此不能使用单引号（`'`）或双引号（`"`）将它们引用。
+
+以 `#` 开头的行将被视为注释而跳过。
+
+此外，可以在每行 URI 之后指定以下选项，这些可选行必须以空格开头：
+
+:::info
+
+由于技术问题，该部分内容暂未实现。
+请前往[官方文档](https://aria2.github.io/manual/en/html/aria2c.html#input-file)查看详情。
+
+:::
+
+这些选项的含义与命令行选项完全相同，但它只适用于它所属的 URI。
+请注意，对于输入文件中的选项，必须去除前缀 `--`。
+
+比如 `uri.txt` 的内容是：
+
+```shell showLineNumbers title="uri.txt"
+http://server/file.iso http://mirror/file.iso
+  dir=/iso_images
+  out=file.img
+http://foo/bar
+```
+
+如果使用 `-i uri.txt -d /tmp` 选项执行 Aria2，则 `file.iso` 将保存为 `/iso_images/file.img`，
+并从 `http://server/file.iso` 和 `http://mirror/file.iso` 下载。
+文件 `bar` 从 `http://foo/bar` 下载并保存为 `/tmp/bar`。
+
+在某些情况下，[`out`](#--out) 参数不起作用。
+有关限制，请参阅 [`--out`](#--out) 选项的注释。
+<br /><br />
+
+
+
+
+### 服务器性能配置文件
+
+本节介绍服务器性能配置文件的格式。
+该文件是纯文本，每一行都有几个 `NAME=VALUE` 对，每对以逗号 `,` 分隔。
+目前识别以下名称：
+
+- `host`
+
+服务器主机名。
+必要。
+
+- `protocol`
+
+此配置文件的协议，例如 `ftp`，`http`。
+必要。
+
+- `dl_speed`
+
+在上一次下载中观察到的平均下载速度（以字节/秒为单位）。
+必要。
+
+- `sc_avg_speed`
+
+在上一次下载中观察到的平均下载速度（以字节/秒为单位）。
+只有在单连接环境中完成下载并且仅由 AdaptiveURISelector 使用时，才会更新此值。
+可选。
+
+- `mc_avg_speed`
+
+在上一次下载中观察到的平均下载速度（以字节/秒为单位）。
+只有在多连接环境中完成下载并且仅由 AdaptiveURISelector 使用时，才会更新此值。
+可选。
+
+- `counter`
+
+服务器被使用了多少次。
+目前此值仅由 AdaptiveURISelector 使用。
+可选。
+
+- `last_updated`
+
+与此服务器的最后一次联系时间（格林威治标准时间），以纪元（1970 年 1 月 1 日 00:00:00，UTC）至今的秒数指定。
+必要。
+
+- `status`
+
+当无法访问服务器或发生服务中断或超时时，将设置 `ERROR`。
+否则设置 `OK`。
+
+:::info
+
+这些字段必须存在于一行中，其顺序并不重要。
+您可以放置​​上述内容以外的 `NAME=VALUE` 对，不过他们会被忽略。
+
+一个例子如下：
+
+```shell showLineNumbers
+host=localhost, protocol=http, dl_speed=32000, last_updated=1222491640, status=OK
+host=localhost, protocol=ftp, dl_speed=0, last_updated=1222491632, status=ERROR
+```
+
+:::
+<br /><br />
+
+
+
+
+## RPC 接口
+
+Aria2 能提供基于 HTTP 的 JSON-RPC 和 XML-RPC 接口，它们拥有的功能基本相同。
+Aria2 还能提供基于 WebSocket 的 JSON-RPC。
+
+基于 WebSocket 的 JSON-RPC 与基于 HTTP 的 JSON-RPC 都使用相同的方法签名和响应格式，
+但是基于 WebSocket 的 JSON-RPC 另外提供服务器启动的通知。
+有关详细信息，请参阅[基于 WebSocket 的 JSON-RPC](#基于-websocket-的-json-rpc)部分。
+
+JSON-RPC 接口（通过 HTTP 和 WebSocket）的请求路径是 `/jsonrpc`。
+XML-RPC 接口的请求路径是 `/rpc`。
+
+基于 WebSocket JSON-RPC 的 URI 是 `ws://HOST:PORT/jsonrpc`。
+如果启用了 SSL/TLS 加密，请改用 `wss://HOST:PORT/jsonrpc`。
+
+基于 JSON-RPC 2.0 ([https://www.jsonrpc.org/specification](https://www.jsonrpc.org/specification))
+实现的 JSON-RPC 支持 HTTP POST 和 GET (JSONP)。
+WebSocket 传输是 Aria2 扩展。
+
+JSON-RPC 接口不支持通过 HTTP 发送通知，但 RPC 服务器将通过 WebSocket 发送通知。
+它也不支持浮点数，且字符编码必须是 UTF-8。
+
+在阅读以下 JSON-RPC 文档时，请将结构作为 JSON 对象分析。
+<br /><br />
+
+
+
+
+### 术语
+
+- GID
+
+GID（或 gid）是管理每次下载的关键。
+每次下载都将分配一个唯一的 GID。
+GID 在 Aria2 中存储为 64 位二进制值。
+对于 RPC 访问，它表示为 16 个字符的十六进制字符串（例如 `2089b05ecca3d829`）。
+
+通常，Aria2 会为每次下载生成此 GID，但用户可以使用 [`--gid`](#--gid) 选项手动指定 GID。
+按 GID 查询下载时，可以只指定 GID 的前缀，只要在其他下载中唯一即可。
+<br /><br />
+
+
+
+
+### RPC 授权机密令牌
+
+从 1.18.4 开始，Aria2 除了 HTTP 基础授权外，还提供了 RPC 方法级别的授权。
+在未来的版本中，HTTP 基本授权将被删除，RPC 方法级授权将成为强制性的。
+
+要使用 RPC 方法级授权，用户必须使用 [`--rpc-secret`](#--rpc-secret) 选项指定 RPC 秘密授权令牌。
+对于每个 RPC 方法调用，调用者必须包含以 `token:` 为前缀的令牌。
+在不使用 [`--rpc-secret`](#--rpc-secret) 选项的情况下，
+如果 RPC 方法中的第一个参数是一个字符串并且以 `token:` 开头，
+它就会在请求被处理之前从参数列表中删除。
+
+例如，如果 RPC 机密授权令牌是 `$$secret$$`，则调用 [`aria2.addUri()`](#aria2.addUri) RPC 方法必须如下所示：
+
+```python
+aria2.addUri("token:$$secret$$", ["http://example.org/file"])
+```
+
+RPC 方法 [`system.multicall()`](#system.multicall) 被特殊对待。
+由于 XML-RPC 规范只允许单个数组作为此方法的参数，因此我们不在调用中指定令牌。
+相反，每个嵌套方法调用都必须提供令牌作为上述第一个参数。
+
+:::info
+
+Aria2 中的机密令牌验证旨在花费至少一定的时间来减轻针对 RPC 接口的暴力攻击或字典攻击。
+因此，建议在适当的时候优先使用 Batch 或 [`system.multicall()`](#system.multicall) 请求。
+
+[`system.listMethods()`](#system.listMethods) 和
+[`system.listNotifications()`](#system.listNotifications) 可以在没有令牌的情况下执行。
+由于它们只是返回可用的方法或通知，所以它们不会改变任何东西，而且在没有秘密令牌的情况下是安全的。
+
+:::
+<br /><br />
+
+
+
+
+### RPC 接口方法
+
+所有代码示例都与 Python 2.7 解释器兼容。
+有关 `secret` 参数的信息，请参阅[RPC 授权机密令牌](#rpc-授权机密令牌)。
+<br /><br />
+
+
+
+
+#### <CMD>aria2.addUri([secret, ]uris[, options[, position]])</CMD> {#aria2.addUri}
+
+- 此方法添加一个新的下载。
+- 此方法返回新注册下载的 GID。
+
+`uris` 是一组指向相同资源的 HTTP/FTP/SFTP/BitTorrent URI（字符串）。
+如果您混合添加指向不同资源的 URI，那么下载可能会失败或损坏，而 Aria2 不会报告错误。
+添加 BitTorrent Magnet URI 时，`uris` 只能是一个 BitTorrent Magnet URI。
+
+`options` 是一个结构体，它的成员是 `NAME=VALUE` 对。
+有关更多详细信息，请参见[RPC 接口选项](#rpc-接口选项)小节。
+
+如果给出 `position`，它必须是一个从 `0` 开始的整数。
+新的下载将被插入等待队列中的 `position` 位置。
+如果 `position` 被省略或大于队列的当前大小，则新下载将附加到队列的末尾。
+
+- JSON-RPC 示例
+
+以下示例添加文件 `http://example.org/file`：
+
+```python {1-4}
+>>> import urllib2, json
+>>> jsonreq = json.dumps({'jsonrpc':'2.0', 'id':'qwer', 'method':'aria2.addUri', 'params':[['http://example.org/file']]})
+>>> c = urllib2.urlopen('http://localhost:6800/jsonrpc', jsonreq)
+>>> c.read()
+'{"id":"qwer","jsonrpc":"2.0","result":"2089b05ecca3d829"}'
+```
+
+- XML-RPC 示例
+
+以下示例添加文件 `http://example.org/file`：
+
+```python {1-3}
+>>> import xmlrpclib
+>>> s = xmlrpclib.ServerProxy('http://localhost:6800/rpc')
+>>> s.aria2.addUri(['http://example.org/file'])
+'2089b05ecca3d829'
+```
+
+以下示例添加了一个包含两个源和一些选项的新下载：
+
+```python {1}
+>>> s.aria2.addUri(['http://example.org/file', 'http://mirror/file'], dict(dir="/tmp"))
+'d2703803b52216d1'
+```
+
+以下示例添加一个下载并将其插入到队列的前面：
+
+```python {1}
+>>> s.aria2.addUri(['http://example.org/file'], {}, 0)
+'ca3d829cee549a4d'
+```
+<br /><br />
+
+
+
+
+#### <CMD>aria2.addTorrent([secret, ]torrent[, uris[, options[, position]]])</CMD> {#aria2.addTorrent}
+
+- 此方法通过上传 `.torrent` 文件来添加 BitTorrent 下载。
+- 此方法返回新注册下载的 GID。
+
+如果要添加 BitTorrent Magnet URI，请改用 [`aria2.addUri()`](#aria2.addUri) 方法。
+
+`torrent` 必须是包含 `.torrent` 文件内容的 base64 编码字符串。
+
+`uris` 是一组 URI（字符串），用于 Web 播种。
+对于单个文件的种子，URI 可以是指向资源的完整 URI；
+如果 URI 以 `/` 结尾，则添加种子文件中的名称。
+对于多文件种子，种子中的名称和路径被添加以形成每个文件的 URI。
+
+`options` 是一个结构体，它的成员是 `NAME=VALUE` 对。
+有关更多详细信息，请参见[RPC 接口选项](#rpc-接口选项)小节。
+
+如果给出 `position`，它必须是一个从 `0` 开始的整数。
+新的下载将被插入等待队列中的 `position` 位置。
+如果 `position` 被省略或大于队列的当前大小，则新下载将附加到队列的末尾。
+
+如果 [`--rpc-save-upload-metadata`](#--rpc-save-upload-metadata) 为 `true`，
+上传的数据将保存在 [`--dir`](#--dir) 选项指定的目录中，
+该文件名是以 `.torrent` 为后缀的十六进制 SHA-1 数据哈希值字符串。
+例如，文件名可能是 `0a3893293e27ac0490424c06de4d09242215f0a6.torrent`。
+如果已存在同名文件，则将其覆盖！
+如果文件无法保存成功或 [`--rpc-save-upload-metadata`](#--rpc-save-upload-metadata) 为 `false`，
+则该方法添加的下载不会被 [`--save-session`](#--save-session) 保存。
+
+以下示例添加本地文件 `file.torrent`：
+
+- JSON-RPC 示例
+
+```python {1-5}
+>>> import urllib2, json, base64
+>>> torrent = base64.b64encode(open('file.torrent').read())
+>>> jsonreq = json.dumps({'jsonrpc':'2.0', 'id':'asdf', 'method':'aria2.addTorrent', 'params':[torrent]})
+>>> c = urllib2.urlopen('http://localhost:6800/jsonrpc', jsonreq)
+>>> c.read()
+'{"id":"asdf","jsonrpc":"2.0","result":"2089b05ecca3d829"}'
+```
+
+- XML-RPC 示例
+
+```python {1-3}
+>>> import xmlrpclib
+>>> s = xmlrpclib.ServerProxy('http://localhost:6800/rpc')
+>>> s.aria2.addTorrent(xmlrpclib.Binary(open('file.torrent', mode='rb').read()))
+'2089b05ecca3d829'
+```
+<br /><br />
+
+
+
+
+#### <CMD>aria2.addMetalink([secret, ]metalink[, options[, position]])</CMD> {#aria2.addMetalink}
+
+- 此方法通过上传 `.metalink` 文件来添加 Metalink 下载。
+- 此方法返回新注册下载的 GID 数组。
+
+`metalink` 是一个 base64 编码的字符串，其中包含 `.metalink` 文件的内容。
+
+`options` 是一个结构体，它的成员是 `NAME=VALUE` 对。
+有关更多详细信息，请参见[RPC 接口选项](#rpc-接口选项)小节。
+
+如果给出 `position`，它必须是一个从 `0` 开始的整数。
+新的下载将被插入等待队列中的 `position` 位置。
+如果 `position` 被省略或大于队列的当前大小，则新下载将附加到队列的末尾。
+
+如果 [`--rpc-save-upload-metadata`](#--rpc-save-upload-metadata) 为 `true`，
+上传的数据将保存在 [`--dir`](#--dir) 选项指定的目录中，
+该文件名是以 `.metalink` 为后缀的十六进制 SHA-1 数据哈希值字符串。
+例如，文件名可能是 `0a3893293e27ac0490424c06de4d09242215f0a6.metalink`。
+如果已存在同名文件，则将其覆盖！
+如果文件无法保存成功或 [`--rpc-save-upload-metadata`](#--rpc-save-upload-metadata) 为 `false`，
+则该方法添加的下载不会被 [`--save-session`](#--save-session) 保存。
+
+以下示例添加本地文件 `file.meta4`：
+
+- JSON-RPC 示例
+
+```python {1-5}
+>>> import urllib2, json, base64
+>>> metalink = base64.b64encode(open('file.meta4').read())
+>>> jsonreq = json.dumps({'jsonrpc':'2.0', 'id':'qwer', 'method':'aria2.addMetalink', 'params':[metalink]})
+>>> c = urllib2.urlopen('http://localhost:6800/jsonrpc', jsonreq)
+>>> c.read()
+'{"id":"qwer","jsonrpc":"2.0","result":["2089b05ecca3d829"]}'
+```
+
+- XML-RPC 示例
+
+```python {1-3}
+>>> import xmlrpclib
+>>> s = xmlrpclib.ServerProxy('http://localhost:6800/rpc')
+>>> s.aria2.addMetalink(xmlrpclib.Binary(open('file.meta4', mode='rb').read()))
+['2089b05ecca3d829']
+```
+<br /><br />
+
+
+
+
+#### <CMD>aria2.remove([secret, ]gid)</CMD> {#aria2.remove}
+
+- 此方法删除由 `gid`（字符串）表示的下载。
+- 此方法返回已删除下载的 GID。
+
+如果指定的下载正在进行，它首先被停止。
+已删除下载的状态变为已删除。
+
+以下示例删除 `GID#2089b05ecca3d829` 的下载。
+
+- JSON-RPC 示例
+
+```python {1-4}
+>>> import urllib2, json
+>>> jsonreq = json.dumps({'jsonrpc':'2.0', 'id':'qwer', 'method':'aria2.remove', 'params':['2089b05ecca3d829']})
+>>> c = urllib2.urlopen('http://localhost:6800/jsonrpc', jsonreq)
+>>> c.read()
+'{"id":"qwer","jsonrpc":"2.0","result":"2089b05ecca3d829"}'
+```
+
+- XML-RPC 示例
+
+```python {1-3}
+>>> import xmlrpclib
+>>> s = xmlrpclib.ServerProxy('http://localhost:6800/rpc')
+>>> s.aria2.remove('2089b05ecca3d829')
+'2089b05ecca3d829'
+```
+<br /><br />
+
+
+
+----------------------------------------------------------------
+
+### 基于 WebSocket 的 JSON-RPC
+
+### RPC 接口选项
+
+
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />
+<br /><br />

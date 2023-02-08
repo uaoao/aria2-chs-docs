@@ -1,0 +1,8 @@
+{
+  "label": "Aria2 中文文档",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "Aria2 非官方中文文档，主要面向普通用户。"
+  }
+}

@@ -1,0 +1,339 @@
+---
+sidebar_position: 1
+tags: [Aria2, 中文, 翻译, 文档]
+title: Aria2 - 超快速的下载工具
+description: Aria2 介绍
+---
+
+
+
+export const Highlight = ({children}) => (
+  <span
+    style={{
+      backgroundColor: 'cornflowerblue',
+      borderRadius: '5px',
+      color: '#fff',
+      padding: '0.2rem',
+    }}>
+    {children}
+  </span>
+);
+
+
+
+
+:::tip
+
+这篇文档翻译自
+**[aria2 - The ultra fast download utility](https://aria2.github.io/manual/en/html/README.html)**
+。<br />
+当前文档翻译自版本 <Highlight> 1.36.0 </Highlight> <br />
+如果您想报告错误或改进此翻译，请在
+[https://github.com/yiskiee/aria2-chs-docs](https://github.com/yiskiee/aria2-chs-docs) 提交。
+
+:::
+
+
+
+
+## 免责声明 {#declare}
+
+此程序不提供保修。您必须自行承担使用此程序的风险。
+
+
+
+## 介绍
+
+Aria2 是用于下载文件的实用程序。支持的协议有
+HTTP（S），FTP，SFTP，BitTorrent 和 Metalink。
+
+Aria2 可以从多个来源/协议下载文件，并尝试利用您的最大下载带宽。
+它支持同时从 HTTP（S）/FTP/SFTP 和 BitTorrent 下载文件，
+同时将 HTTP（S）/FTP/SFTP 下载的数据上传到 BitTorrent 群。
+
+Aria2 使用 Metalink 的块校验和，在下载像 BitTorrent 这样的文件时会自动验证数据块。
+
+项目页面位于 [https://aria2.github.io](https://aria2.github.io)。
+
+
+
+## 功能
+
+以下是功能列表：
+
+- 命令行界面。
+- 通过 HTTP（S）/FTP/SFTP/BitTorrent 下载文件。
+- 分段下载。
+- Metalink 版本 4（RFC 5854），支持（HTTP/FTP/SFTP/BitTorrent）。
+- Metalink 版本 3.0，支持（HTTP/FTP/SFTP/BitTorrent）。
+- 支持 Metalink/HTTP（RFC 6249）。
+- HTTP/1.1 实现。
+- 支持 HTTP 代理。
+- 支持 HTTP BASIC 身份验证。
+- 支持 HTTP 代理认证。
+- 代理的已知环境变量：`http_proxy`，`https_proxy`，`ftp_proxy`，`all_proxy`，以及 `no_proxy`。
+- HTTP gzip，压缩内容编码支持。
+- 使用 HTTPS 中的给定受信任 CA 证书验证对等方。
+- HTTPS 中的客户端证书身份验证。
+- 支持分块传输编码。
+- 使用 Firefox3 格式、Chromium/Google Chrome 和 Mozilla/Firefox （1.x/2.x）/Netscape 格式从文件加载 Cookie。
+- 将 Cookie 保存为 Mozilla/Firefox （1.x/2.x）/Netscape 格式。
+- 支持自定义 HTTP 标头。
+- 支持持久连接。
+- FTP/SFTP 通过 HTTP 代理。
+- 下载/上传速度限制。
+- BitTorrent扩展：快速扩展，DHT，PEX，MSE / PSE，MULTI-Tracker，UDP跟踪器。
+- BitTorrent [WEB-Seeding](https://getright.com/seedtorrent.html)。
+Aria2 请求的块大于段大小，以减少请求开销。它还支持具有段大小的管道请求。
+- BitTorrent 本地 Peer 发现。
+- 完全重命名/更改下载的 BitTorrent 目录结构。
+- JSON-RPC（通过 HTTP 和 WebSocket）/XML-RPC 接口。
+- 作为守护进程运行。
+- 多文件种子/Metalink 中的选择性下载。
+- Metalink 中的块校验和验证。
+- 可以在 Metalink 中禁用分段下载。
+- 支持 Netrc。
+- 支持配置文件。
+- 支持下载文本文件或标准输入中的 URI，同时也可以指定输出目录和文件名。
+- 支持参数化 URI。
+- IPv6 支持与 Happy Eyeballs。
+- 磁盘缓存以减少磁盘活动。
+
+
+
+## 版本控制和发布计划
+
+我们使用 3 个数字作为 Aria2 版本号：`主要.次要.补丁`。
+
+我们将在每个月的 15 日发布次要更新。
+如果自上次发布以来没有任何更改，我们可能会跳过某个版本。
+翻译团队的功能和文档翻译冻结在发布日（每月 5 日）前 10 天。
+我们大概将在这天提出有关即将发布版本的问题。
+
+如果我们遇到安全问题，我们可能会在常规版本中发布补丁版本。
+
+主版本号将暂时保持在 1。
+
+
+
+
+## 如何获取源代码
+
+我们在 Github 上维护源代码：[https://github.com/aria2/aria2](https://github.com/aria2/aria2)
+
+若要获取最新的源代码，请运行以下命令：
+
+```shell
+git clone https://github.com/aria2/aria2.git
+```
+
+这将在当前目录中创建 Aria2 目录，源文件存储在那里。
+
+
+
+
+## 构建依赖
+
+:::info
+
+该小节不在翻译计划内，请**[前往原文查看](https://aria2.github.io/manual/en/html/README.html#dependency)**
+
+:::
+
+
+
+
+
+## 如何构建
+
+:::info
+
+该小节不在翻译计划内，请**[前往原文查看](https://aria2.github.io/manual/en/html/README.html#how-to-build)**
+
+:::
+
+
+
+
+## 交叉编译 Windows 二进制文件
+
+:::info
+
+该小节不在翻译计划内，
+请**[前往原文查看](https://aria2.github.io/manual/en/html/README.html#cross-compiling-windows-binary)**
+
+:::
+
+
+
+
+## 交叉编译 Android 二进制文件
+
+:::info
+
+该小节不在翻译计划内，
+请**[前往原文查看](https://aria2.github.io/manual/en/html/README.html#cross-compiling-android-binary)**
+
+:::
+
+
+
+
+## 构建文档
+
+:::info
+
+该小节不在翻译计划内，
+请**[前往原文查看](https://aria2.github.io/manual/en/html/README.html#building-documentation)**
+
+:::
+
+
+
+## BitTorrent
+
+### 关于文件名
+
+下载文件的文件名确定如下：
+
+- 单文件模式
+    - 如果 `name` 键存在于 `.torrent` 文件中，则文件名是 `name` 键的值。
+    否则，文件名是 `.torrent` 文件的基本名附加 `.file` 后缀。
+    例如，`.torrent` 文件的文件名是 `test.torrent`，则输出的文件名是 `test.torrent.file`。
+    文件保存目录可以通过 `-d` 选项指定。
+- 多文件模式
+    - 将创建 `.torrent` 文件中提到的完整目录或文件结构。
+    存储下载文件的顶级目录的目录可以通过 `-d` 选项指定。
+
+在下载开始之前，如果有需要，Aria2 会创建一个完整的目录结构。
+默认情况下，Aria2 最多打开 100 个 `.torrent` 文件中提到的文件，并直接读写这些文件。
+同时打开的文件数量可以通过 `--bt-max-open-files` 选项控制。
+
+
+
+### DHT
+
+Aria2 支持主线兼容的 DHT。
+默认情况下，IPv4 DHT 的路由表信息保存在 `$XDG_CACHE_HOME/aria2/dht.dat`，
+IPv6 DHT 的路由表信息保存在 `$XDG_CACHE_HOME/aria2/dht6.dat`。
+除非文件存在于 `$HOME/.aria2/dht.dat` 或 `$HOME/.aria2/dht6.dat` 中。
+Aria2 使用相同的端口号来侦听 IPv4 和 IPv6 的 DHT。
+
+
+
+### UDP Tracker
+
+启用 IPv4 DHT 时，将启用 UDP Tracker 支持。UDP Tracker 的端口号与 DHT 共享。
+使用 `--dht-listen-port` 选项更改端口号。
+
+
+
+### 其他应注意的事项
+
+- `-o` 选项用于更改 `.torrent` 文件本身的文件名，而不是 `.torrent` 文件中文件的文件名。为此，请改用 `--index-out` 选项。
+- Aria2 默认使用的 TCP 和 UDP 端口号取值范围在 6881-6999 。
+- Aria2 不会自动配置端口转发。请手动在你的路由器或防火墙中配置。
+- Aria2 默认最大连接 Peer 数为 55。当下载速率较低时可能会超过此限制。可以使用 `--bt-request-peer-speed-limit` 选项调整最低下载速率。
+- 从版本 0.10.0 开始，Aria2 在选择性下载完成后停止发送请求消息。
+
+
+
+## Metalink
+
+当前的实现支持 HTTP（S）/FTP/SFTP/BitTorrent。
+其他 P2P 协议将被忽略。
+同时支持 Metalink4 （RFC 5854） 和 Metalink 版本 3.0 文档。
+
+对于校验和的验证，支持 md5、sha-1、sha-224、sha-256、sha-384 和 sha-512。
+如果提供了多个哈希算法，Aria2 将使用更强的算法。
+如果整个文件校验和验证失败，Aria2 不会重试下载，而只是返回非零代码并退出。
+
+支持的用户首选项包括：版本、语言、位置、协议和操作系统。
+
+如果在 Metalink 文件中提供了块校验和，Aria2 会在下载过程中自动验证数据块。
+可以通过命令行选项关闭此行为。
+
+如果签名包含在 Metalink 文件中，Aria2 会在下载完成后将其另存为文件。
+文件名为：下载文件名的文件名 + `.sig`。如果同一个文件已存在，则不会保存。
+
+在 Metalink4 中，多文件种子可能会出现在 `metalink:metaurl` 元素中。
+由于 Aria2 不能同时下载 2 个相同的种子，
+Aria2 将文件分组在具有相同 BitTorrent 元网址的 `metalink:file` 元素中，并从单个 BitTorrent 群下载它们。
+这基本上是带有文件选择的多文件种子下载，因此还会创建不在 Metalink 文档中但与所选文件共享同一段空间的相邻文件。
+
+如果在 `metalink:url` 或 `metalink:metaurl` 元素中指定了相对 URI，Aria2 将使用 metalink 文件的 URI 作为基本 URI 来解析相对 URI。
+如果在从本地磁盘读取的 Metalink 文件中找到相对 URI，aria2 使用 `--metalink-base-uri`` 选项的值作为基本 URI。
+如果未指定此选项，则将忽略相对 URI。
+
+
+
+
+## Metalink / HTTP
+
+当前实现仅使用 `rel=duplicate`。
+Aria2 了解摘要标头字段，并检查它是否与其他源的摘要值匹配。
+如果不同，就断开连接。Aria2 还使用此摘要值在下载完成后执行校验和的验证。
+Aria2 能识别地理位置。你可以使用 `--metalink-location` 选项告诉 Aria2 位置信息。
+
+
+
+## netrc
+
+默认情况下，为 HTTP（S）/FTP/SFTP 启用 netrc 支持。
+要禁用 netrc 支持，请在命令行添加 `-n` 选项。您的 `.netrc` 文件应具有正确的权限 （600）。
+
+
+
+
+## WebSocket
+
+嵌入在 Aria2 中的 WebSocket 服务器实现了 RFC 6455 中定义的规范。
+支持的协议版本为 13。
+
+
+
+
+## libaria2
+
+libaria2 是一个C++库，它为客户端代码提供 Aria2 功能。
+目前，libaria2 不是默认构建的。
+要启用 libaria2，请使用 `--enable-libaria2` 配置选项。
+默认情况下，仅构建共享库。
+要构建静态库，请使用 `--enable-static` 配置选项。
+请参阅 libaria2 文档以了解如何使用 API。
+
+
+
+## 引用
+
+
+
+- [aria2 Online Manual](https://aria2.github.io/manual/en/html/)
+- [https://aria2.github.io](https://aria2.github.io)
+- [RFC 959 FILE TRANSFER PROTOCOL (FTP)](http://tools.ietf.org/html/rfc959)
+- [RFC 1738 Uniform Resource Locators (URL)](http://tools.ietf.org/html/rfc1738)
+- [RFC 2428 FTP Extensions for IPv6 and NATs](http://tools.ietf.org/html/rfc2428)
+- [RFC 2616 Hypertext Transfer Protocol -- HTTP/1.1](http://tools.ietf.org/html/rfc2616)
+- [RFC 3659 Extensions to FTP](http://tools.ietf.org/html/rfc3659)
+- [RFC 3986 Uniform Resource Identifier (URI): Generic Syntax](http://tools.ietf.org/html/rfc3986)
+- [RFC 4038 Application Aspects of IPv6 Transition](http://tools.ietf.org/html/rfc4038)
+- [RFC 5854 The Metalink Download Description Format](http://tools.ietf.org/html/rfc5854)
+- [RFC 6249 Metalink/HTTP: Mirrors and Hashes](http://tools.ietf.org/html/rfc6249)
+- [RFC 6265 HTTP State Management Mechanism](http://tools.ietf.org/html/rfc6265)
+- [RFC 6266 Use of the Content-Disposition Header Field in the Hypertext Transfer Protocol (HTTP)](http://tools.ietf.org/html/rfc6266)
+- [RFC 6455 The WebSocket Protocol](http://tools.ietf.org/html/rfc6455)
+- [RFC 6555 Happy Eyeballs: Success with Dual-Stack Hosts](http://tools.ietf.org/html/rfc6555)
+- [The BitTorrent Protocol Specification](http://www.bittorrent.org/beps/bep_0003.html)
+- [BitTorrent: DHT Protocol](http://www.bittorrent.org/beps/bep_0005.html)
+- [BitTorrent: Fast Extension](http://www.bittorrent.org/beps/bep_0006.html)
+- [BitTorrent: IPv6 Tracker Extension](http://www.bittorrent.org/beps/bep_0007.html)
+- [BitTorrent: Extension for Peers to Send Metadata Files](http://www.bittorrent.org/beps/bep_0009.html)
+- [BitTorrent: Extension Protocol](http://www.bittorrent.org/beps/bep_0010.html)
+- [BitTorrent: Multitracker Metadata Extension](http://www.bittorrent.org/beps/bep_0012.html)
+- [BitTorrent: UDP Tracker Protocol for BitTorrent](http://www.bittorrent.org/beps/bep_0015.html)
+and [BitTorrent udp-tracker protocol specification](http://www.rasterbar.com/products/libtorrent/udp_tracker_protocol.html).
+- [BitTorrent: WebSeed - HTTP/FTP Seeding (GetRight style)](http://www.bittorrent.org/beps/bep_0019.html)
+- [BitTorrent: Private Torrents](http://www.bittorrent.org/beps/bep_0027.html)
+- [BitTorrent: BitTorrent DHT Extensions for IPv6](http://www.bittorrent.org/beps/bep_0032.html)
+- [BitTorrent: Message Stream Encryption](http://wiki.vuze.com/w/Message_Stream_Encryption)
+- [Kademlia: A Peer-to-peer Information System Based on the XOR Metric](https://pdos.csail.mit.edu/~petar/papers/maymounkov-kademlia-lncs.pdf)

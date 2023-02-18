@@ -3550,6 +3550,339 @@ Aria2 中的机密令牌验证旨在花费至少一定的时间来减轻针对 R
 
 
 
+
+#### <CMD>aria2.forceRemove([secret, ]gid)</CMD> {#aria2.forceRemove}
+
+- 此方法删除由 `gid`（字符串）表示的下载。
+
+此方法的行为与 [`aria2.remove()`](#aria2.remove) 类似，但是此方法删除下载而不执行任何需要时间的操作，例如首先联系 BitTorrent Tracker 注销下载。
+<br /><br />
+
+
+
+
+#### <CMD>aria2.pause([secret, ]gid)</CMD> {#aria2.pause}
+
+- 此方法暂停由 `gid`（字符串）表示的下载。
+- 此方法返回暂停下载的 GID。
+
+暂停下载的状态变为 `pause`。
+如果下载处于活动状态，则将下载置于等待队列的前面。
+状态为暂停时，下载未开始。
+要改变状态为 `waiting`，请使用 [`aria2.unpause()`](#aria2.unpause) 方法。
+<br /><br />
+
+
+
+
+#### <CMD>aria2.pauseAll([secret])</CMD> {#aria2.pauseAll}
+
+- 此方法等同于为每个处于活动／等待状态的下载调用 [`aria2.pause()`](#aria2.pause)。
+- 此方法返回 `OK`。
+
+<br /><br />
+
+
+
+
+#### <CMD>aria2.forcePause([secret, ]gid)</CMD> {#aria2.forcePause}
+
+- 此方法暂停由 `gid`（字符串）表示的下载。
+
+此方法的行为与 [`aria2.pause()`](#aria2.pause) 类似，但是此方法暂停下载而不执行任何需要时间的操作，例如首先联系 BitTorrent Tracker 注销下载。
+<br /><br />
+
+
+
+
+#### <CMD>aria2.forcePauseAll([secret])</CMD> {#aria2.forcePauseAll}
+
+- 此方法等同于为每个处于活动／等待状态的下载调用 [`aria2.forcePause()`](#aria2.forcePause)。
+- 此方法返回 `OK`。
+
+<br /><br />
+
+
+
+
+#### <CMD>aria2.unpause([secret, ]gid)</CMD> {#aria2.unpause}
+
+- 此方法将 `gid`（字符串）表示的下载状态从暂停更改为等待，使下载符合重新启动的条件。
+- 此方法返回未暂停下载的 GID。
+
+<br /><br />
+
+
+
+
+#### <CMD>aria2.unpauseAll([secret])</CMD> {#aria2.unpauseAll}
+
+- 此方法等同于为每个暂停的下载调用 [`aria2.unpause()`]。
+- 此方法返回 `OK`。
+
+<br /><br />
+
+
+
+
+#### <CMD>aria2.tellStatus([secret, ]gid[, keys])</CMD> {#aria2.tellStatus}
+
+- 此方法返回由 `gid`（字符串）表示的下载进度。
+
+`keys` 是一个字符串数组。
+如果指定，则响应仅包含键数组中的键。
+如果 `keys` 为空或省略，则响应包含所有键。
+当您只需要特定的密钥并避免不必要的传输时，这很有用。
+例如，`aria2.tellStatus("2089b05ecca3d829", ["gid", "status"])` 仅返回 `gid` 和状态 `keys`。
+
+响应是一个结构并包含以下键。值是字符串。
+
+> `gid`
+
+下载的 GID
+
+> `status`
+
+`active` 表示当前正在下载或做种。
+`waiting` 表示队列中未开始的下载。
+`paused` 表示下载暂停。
+`error` 表示下载因错误而停止。
+`complete` 表示下载完全且停止。
+`removed` 表示用户移除了下载。
+
+> `totalLength`
+
+下载的总长度（以字节为单位）。
+
+> `completedLength`
+
+已下载的长度（以字节为单位）。
+
+> `uploadLength`
+
+已上传的长度（以字节为单位）。
+
+> `bitfield`
+
+下载进度的十六进制表示。
+最高位对应于索引 0 处的片段。
+任何设置位表示已加载片段，而未设置位表示尚未加载和/或缺失片段。
+末尾的任何溢出位都设置为零。
+当下载尚未开始时，此键将不会包含在响应中。
+
+> `downloadSpeed`
+
+此下载的下载速度（以字节/秒为单位）。
+
+> `uploadSpeed`
+
+此下载的上传速度（以字节/秒为单位）。
+
+> `infoHash`
+
+信息哈希，仅 BitTorrent。
+
+> `numSeeders`
+
+Aria2 连接到的 Seeder 数量。
+仅 BitTorrent。
+
+> `seeder`
+
+如果本地端点是 Seeder，则为 `true`。
+否则为 `false`。
+仅 BitTorrent。
+
+> `pieceLength`
+
+片段长度（以字节为单位）。
+
+> `numPieces`
+
+片段数。
+
+> `connections`
+
+Aria2 连接到的 Peer/Server 的数量。
+
+> `errorCode`
+
+此项目的最后一个错误代码（如果有）。
+该值是一个字符串。
+错误代码在[退出状态](#退出状态)部分中定义。
+此值仅适用于已停止或已完成的下载。
+
+> `errorMessage`
+
+与 `errorCode` 关联的（希望）人类可读的错误消息。
+
+> `followedBy`
+
+作为此下载的结果生成的 GID 列表。
+例如，当 Aria2 下载 Metalink 文件时，它会生成 Metalink 中描述的下载（请参阅 [`--follow-metalink`](#--follow-metalink) 选项）。
+此值可用于跟踪自动生成的下载。
+如果没有此类下载，则此键将不会包含在响应中。
+
+> `following`
+
+`followedBy` 的反向链接。
+`followedBy` 中包含的下载在其 `following` 值中具有此对象的 GID。
+
+> `belongsTo`
+
+父下载的 GID。
+一些下载是另一个下载的一部分。
+例如，如果 Metalink 中的文件具有 BitTorrent 资源，则 `.torrent` 文件的下载是该父文件的一部分。
+如果此下载没有父项，则此健将不会包含在响应中。
+
+> `dir`
+
+保存文件的目录。
+
+> `files`
+
+返回文件列表。
+此列表的元素与 [`aria2.getFiles()`](#aria2.getFiles) 方法中使用的结构相同。
+
+> `bittorrent`
+
+包含从 `.torrent`（文件）中检索到的信息的结构。
+仅 BitTorrent。它包含以下键。
+
+>> `announceList`
+>
+> URI 声明列表。
+> 如果种子包含 `announce` 而没有 `announce-list`，则 `announce` 将转换为 `announce-list` 格式。
+>
+>> `comment`
+>
+> 种子的注释。
+> 如果可用，则使用 `comment.utf-8`。
+>
+>> `creationDate`
+>
+> 种子的创建时间。
+> 该值是纪元（1970 年 1 月 1 日 00:00:00，UTC）至今的秒数作为整数，以秒为单位。
+>
+>> `mode`
+>
+> 种子的文件模式。
+> 该值是 `single` 或 `multi`。
+>
+>> `info`
+>
+> 包含来自 Info 字典的数据结构。
+> 它包含以下键。
+>
+>>> `name`
+>>
+>> Info 字典中的名称。
+>> 如果可用，使用 `name.utf-8`。
+
+> `verifiedLength`
+
+对文件进行哈希检查时已验证的字节数。
+此键仅在对下载进行哈希检查时存在。
+
+> `verifyIntegrityPending`
+
+如果此下载正在等待队列中的哈希检查，则为 `true`。
+仅当此下载在队列中时才存在此键。
+
+- JSON-RPC 示例
+
+以下示例使用 `GID#2089b05ecca3d829` 获取有关下载的信息：
+
+```python {1-5}
+>>> import urllib2, json
+>>> from pprint import pprint
+>>> jsonreq = json.dumps({'jsonrpc':'2.0', 'id':'qwer', 'method':'aria2.tellStatus', 'params':['2089b05ecca3d829']})
+>>> c = urllib2.urlopen('http://localhost:6800/jsonrpc', jsonreq)
+>>> pprint(json.loads(c.read()))
+{u'id': u'qwer',
+ u'jsonrpc': u'2.0',
+ u'result': {u'bitfield': u'0000000000',
+             u'completedLength': u'901120',
+             u'connections': u'1',
+             u'dir': u'/downloads',
+             u'downloadSpeed': u'15158',
+             u'files': [{u'index': u'1',
+                         u'length': u'34896138',
+                         u'completedLength': u'34896138',
+                         u'path': u'/downloads/file',
+                         u'selected': u'true',
+                         u'uris': [{u'status': u'used',
+                                    u'uri': u'http://example.org/file'}]}],
+             u'gid': u'2089b05ecca3d829',
+             u'numPieces': u'34',
+             u'pieceLength': u'1048576',
+             u'status': u'active',
+             u'totalLength': u'34896138',
+             u'uploadLength': u'0',
+             u'uploadSpeed': u'0'}}
+```
+
+以下示例仅获取特定键：
+
+```python {1-3}
+>>> jsonreq = json.dumps({'jsonrpc':'2.0', 'id':'qwer', 'method':'aria2.tellStatus', 'params':['2089b05ecca3d829', ['gid', 'totalLength', 'completedLength']]})
+>>> c = urllib2.urlopen('http://localhost:6800/jsonrpc', jsonreq)
+>>> pprint(json.loads(c.read()))
+{u'id': u'qwer',
+ u'jsonrpc': u'2.0',
+ u'result': {u'completedLength': u'5701632',
+             u'gid': u'2089b05ecca3d829',
+             u'totalLength': u'34896138'}}
+```
+
+- XML-RPC 示例
+
+以下示例使用 `GID#2089b05ecca3d829` 获取有关下载的信息：
+
+```python {1-5}
+>>> import xmlrpclib
+>>> from pprint import pprint
+>>> s = xmlrpclib.ServerProxy('http://localhost:6800/rpc')
+>>> r = s.aria2.tellStatus('2089b05ecca3d829')
+>>> pprint(r)
+{'bitfield': 'ffff80',
+ 'completedLength': '34896138',
+ 'connections': '0',
+ 'dir': '/downloads',
+ 'downloadSpeed': '0',
+ 'errorCode': '0',
+ 'files': [{'index': '1',
+            'length': '34896138',
+            'completedLength': '34896138',
+            'path': '/downloads/file',
+            'selected': 'true',
+            'uris': [{'status': 'used',
+                      'uri': 'http://example.org/file'}]}],
+ 'gid': '2089b05ecca3d829',
+ 'numPieces': '17',
+ 'pieceLength': '2097152',
+ 'status': 'complete',
+ 'totalLength': '34896138',
+ 'uploadLength': '0',
+ 'uploadSpeed': '0'}
+```
+
+以下示例仅获取特定键：
+
+```python {1-2}
+>>> r = s.aria2.tellStatus('2089b05ecca3d829', ['gid', 'totalLength', 'completedLength'])
+>>> pprint(r)
+{'completedLength': '34896138', 'gid': '2089b05ecca3d829', 'totalLength': '34896138'}
+```
+
+<br /><br />
+
+
+
+
+#### <CMD>aria2.getGlobalStat([secret])</CMD> {#aria2.getGlobalStat}
+
+
 ----------------------------------------------------------------
 
 ### 基于 WebSocket 的 JSON-RPC
@@ -3586,3 +3919,11 @@ Aria2 中的机密令牌验证旨在花费至少一定的时间来减轻针对 R
 <br /><br />
 <br /><br />
 <br /><br />
+
+::: note title=译者注
+
+Aria2 目前仍然不支持 Socks proxy。
+相关问题请参考: [Support Socks proxies #153](https://github.com/aria2/aria2/issues/153)
+
+:::
+

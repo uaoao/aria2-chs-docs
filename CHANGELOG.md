@@ -1,10 +1,16 @@
 # 文档修改记录
 
 
+## [2023-02-24]
+
+- `aria2-chs-docs/aria2c.mdx`
+    - 更新：至 `aria2.changePosition([secret, ]gid, pos, how)` 小节
+
+
 ## [2023-02-18]
 
 - `aria2-chs-docs/aria2c.mdx`
-    - 更新：至 `aria2.getGlobalStat([secret])` 小节
+    - 更新：至 `aria2.getUris([secret, ]gid)` 小节
 
 
 ## [2023-02-09]

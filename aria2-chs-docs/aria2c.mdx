@@ -3880,7 +3880,369 @@ Aria2 连接到的 Peer/Server 的数量。
 
 
 
-#### <CMD>aria2.getGlobalStat([secret])</CMD> {#aria2.getGlobalStat}
+#### <CMD>aria2.getUris([secret, ]gid)</CMD> {#aria2.getUris}
+
+- 此方法返回下载中使用的 URI，由 `gid`（字符串）表示。
+
+响应是一个结构数组，它包含以下键。
+值为字符串。
+
+> `uri`
+
+URI
+
+> `status`
+
+`used`: 如果 URI 正在使用中。
+`waiting`: 如果 URI 仍在队列中等待。
+
+- JSON-RPC 示例
+
+```python {1-5}
+>>> import urllib2, json
+>>> from pprint import pprint
+>>> jsonreq = json.dumps({'jsonrpc':'2.0', 'id':'qwer', 'method':'aria2.getUris', 'params':['2089b05ecca3d829']})
+>>> c = urllib2.urlopen('http://localhost:6800/jsonrpc', jsonreq)
+>>> pprint(json.loads(c.read()))
+{u'id': u'qwer',
+ u'jsonrpc': u'2.0',
+ u'result': [{u'status': u'used',
+              u'uri': u'http://example.org/file'}]}
+```
+
+- XML-RPC 示例
+
+```python {1-5}
+>>> import xmlrpclib
+>>> from pprint import pprint
+>>> s = xmlrpclib.ServerProxy('http://localhost:6800/rpc')
+>>> r = s.aria2.getUris('2089b05ecca3d829')
+>>> pprint(r)
+[{'status': 'used', 'uri': 'http://example.org/file'}]
+```
+
+<br /><br />
+
+
+
+
+#### <CMD>aria2.getFiles([secret, ]gid)</CMD> {#aria2.getFiles}
+
+- 此方法返回由 `gid`（字符串）表示的下载文件列表。
+
+响应是包含以下键的结构数组。值是字符串。
+
+> `index`
+
+文件的索引，从 `1` 开始，与文件在多文件种子中出现的顺序相同。
+
+> `path`
+
+文件路径。
+
+> `length`
+
+文件大小（以字节为单位）。
+
+> `completedLength`
+
+此文件的完整长度（以字节为单位）。
+请注意，`completedLength` 的总和可能小于 [`aria2.tellStatus()`](#aria2.tellStatus) 方法返回的 `completedLength`。
+这是因为 [`aria2.getFiles()`](#aria2.getFiles) 中的 `completedLength` 仅包含已完成的部分。
+另一方面，[`aria2.tellStatus()`](#aria2.tellStatus) 中的 `completedLength` 也包括部分完成的部分。
+
+> `selected`
+
+如果此文件由 [`--select-file`](#--select-file) 选项选择，则为 `true`。
+如果未指定 [`--select-file`](#--select-file) 或这是单文件种子或根本不是种子下载，则此值始终为 `true`。
+否则为 `false`。
+
+> `uris`
+
+返回此文件的 URI 列表。
+元素类型与 [`aria2.getUris()`](#aria2.getUris()) 方法中使用的结构相同。
+
+- JSON-RPC 示例
+
+```python {1-5}
+>>> import urllib2, json
+>>> from pprint import pprint
+>>> jsonreq = json.dumps({'jsonrpc':'2.0', 'id':'qwer', 'method':'aria2.getFiles', 'params':['2089b05ecca3d829']})
+>>> c = urllib2.urlopen('http://localhost:6800/jsonrpc', jsonreq)
+>>> pprint(json.loads(c.read()))
+{u'id': u'qwer',
+ u'jsonrpc': u'2.0',
+ u'result': [{u'index': u'1',
+              u'length': u'34896138',
+              u'completedLength': u'34896138',
+              u'path': u'/downloads/file',
+              u'selected': u'true',
+              u'uris': [{u'status': u'used',
+                         u'uri': u'http://example.org/file'}]}]}
+```
+
+- XML-RPC 示例
+
+```python {1-5}
+>>> import xmlrpclib
+>>> from pprint import pprint
+>>> s = xmlrpclib.ServerProxy('http://localhost:6800/rpc')
+>>> r = s.aria2.getFiles('2089b05ecca3d829')
+>>> pprint(r)
+[{'index': '1',
+  'length': '34896138',
+  'completedLength': '34896138',
+  'path': '/downloads/file',
+  'selected': 'true',
+  'uris': [{'status': 'used',
+            'uri': 'http://example.org/file'}]}]
+```
+
+<br /><br />
+
+
+
+
+#### <CMD>aria2.getPeers([secret, ]gid)</CMD> {#aria2.getPeers}
+
+- 此方法返回由 `gid`（字符串）表示的下载的 Peer 列表。
+
+此方法仅适用于 BitTorrent。
+响应是一个结构数组，包含以下键。
+值是字符串。
+
+> `peerId`
+
+百分比编码的 Peer ID。
+
+> `ip`
+
+Peer 的 ID。
+
+> `port`
+
+Peer 的端口号。
+
+> `bitfield`
+
+对等方下载进度的十六进制表示。
+最高位对应于索引 `0` 处的片段。
+设置位表示片段可用，未设置位表示片段丢失。
+末尾的任何备用位都设置为零。
+
+> `amChoking`
+
+如果 Aria2 正在阻塞 Peer，则为 `true`。
+否则为 `false`。
+
+> `peerChoking`
+
+如果 Peer 正在阻塞 Aria2，则为 `true`。
+否则为 `false`。
+
+> `downloadSpeed`
+
+此客户端从 Peer 获得的下载速度（字节/秒）。
+
+> `uploadSpeed`
+
+本客户端上传到 Peer 的上传速度（字节/秒）。
+
+> `seeder`
+
+如果 Peer 正在做种，则为 `true`。
+否则为 `false`。
+
+- JSON-RPC 示例
+
+```python {1-5}
+>>> import urllib2, json
+>>> from pprint import pprint
+>>> jsonreq = json.dumps({'jsonrpc':'2.0', 'id':'qwer', 'method':'aria2.getPeers', 'params':['2089b05ecca3d829']})
+>>> c = urllib2.urlopen('http://localhost:6800/jsonrpc', jsonreq)
+>>> pprint(json.loads(c.read()))
+{u'id': u'qwer',
+ u'jsonrpc': u'2.0',
+ u'result': [{u'amChoking': u'true',
+              u'bitfield': u'ffffffffffffffffffffffffffffffffffffffff',
+              u'downloadSpeed': u'10602',
+              u'ip': u'10.0.0.9',
+              u'peerChoking': u'false',
+              u'peerId': u'aria2%2F1%2E10%2E5%2D%87%2A%EDz%2F%F7%E6',
+              u'port': u'6881',
+              u'seeder': u'true',
+              u'uploadSpeed': u'0'},
+             {u'amChoking': u'false',
+              u'bitfield': u'ffffeff0fffffffbfffffff9fffffcfff7f4ffff',
+              u'downloadSpeed': u'8654',
+              u'ip': u'10.0.0.30',
+              u'peerChoking': u'false',
+              u'peerId': u'bittorrent client758',
+              u'port': u'37842',
+              u'seeder': u'false',
+              u'uploadSpeed': u'6890'}]}
+```
+
+- XML-RPC 示例
+
+```python {1-5}
+>>> import xmlrpclib
+>>> from pprint import pprint
+>>> s = xmlrpclib.ServerProxy('http://localhost:6800/rpc')
+>>> r = s.aria2.getPeers('2089b05ecca3d829')
+>>> pprint(r)
+[{'amChoking': 'true',
+  'bitfield': 'ffffffffffffffffffffffffffffffffffffffff',
+  'downloadSpeed': '10602',
+  'ip': '10.0.0.9',
+  'peerChoking': 'false',
+  'peerId': 'aria2%2F1%2E10%2E5%2D%87%2A%EDz%2F%F7%E6',
+  'port': '6881',
+  'seeder': 'true',
+  'uploadSpeed': '0'},
+ {'amChoking': 'false',
+  'bitfield': 'ffffeff0fffffffbfffffff9fffffcfff7f4ffff',
+  'downloadSpeed': '8654',
+  'ip': '10.0.0.30',
+  'peerChoking': 'false',
+  'peerId': 'bittorrent client758',
+  'port': '37842',
+  'seeder': 'false,
+  'uploadSpeed': '6890'}]
+```
+
+<br /><br />
+
+
+
+
+#### <CMD>aria2.getServers([secret, ]gid)</CMD> {#aria2.getServers}
+
+- 此方法返回由 `gid`（字符串）表示当前下载连接的 HTTP(S)/FTP/SFTP 服务器。
+
+响应是一个结构数组，包含以下键。值是字符串。
+
+> `index`
+
+文件的索引，从 `1` 开始，与文件在多文件 Metalink 中出现的顺序相同。
+
+> `servers`
+
+包含以下键的结构列表。
+
+>> `uri`
+>
+> 原始 URI。
+>
+>> `currentUri`
+>
+> 这是当前用于下载的 URI。
+> 如果涉及重定向，则 `currentUri` 和 `uri` 可能不同。
+>
+>> `downloadSpeed`
+>
+> 下载速度（字节/秒）。
+
+- JSON-RPC 示例
+
+```python {1-5}
+>>> import urllib2, json
+>>> from pprint import pprint
+>>> jsonreq = json.dumps({'jsonrpc':'2.0', 'id':'qwer', 'method':'aria2.getServers', 'params':['2089b05ecca3d829']})
+>>> c = urllib2.urlopen('http://localhost:6800/jsonrpc', jsonreq)
+>>> pprint(json.loads(c.read()))
+{u'id': u'qwer',
+ u'jsonrpc': u'2.0',
+ u'result': [{u'index': u'1',
+              u'servers': [{u'currentUri': u'http://example.org/file',
+                            u'downloadSpeed': u'10467',
+                            u'uri': u'http://example.org/file'}]}]}
+```
+
+- XML-RPC 示例
+
+```python {1-5}
+>>> import xmlrpclib
+>>> from pprint import pprint
+>>> s = xmlrpclib.ServerProxy('http://localhost:6800/rpc')
+>>> r = s.aria2.getServers('2089b05ecca3d829')
+>>> pprint(r)
+[{'index': '1',
+  'servers': [{'currentUri': 'http://example.org/dl/file',
+               'downloadSpeed': '20285',
+               'uri': 'http://example.org/file'}]}]
+```
+
+<br /><br />
+
+
+
+
+#### <CMD>aria2.tellActive([secret][, keys])</CMD> {#aria2.tellActive}
+
+- 此方法返回下载处于活动状态的列表。
+
+响应是与 [`aria2.tellStatus()`](#aria2.tellStatus) 方法返回的相同结构的数组。
+`keys` 参数请参考 [`aria2.tellStatus()`](#aria2.tellStatus) 方法。
+<br /><br />
+
+
+
+
+#### <CMD>aria2.tellWaiting([secret, ]offset, num[, keys])</CMD> {#aria2.tellWaiting}
+
+- 此方法返回下载处于等待状态的列表，包括暂停的下载。
+
+`offset` 是一个整数，指定从前面等待的下载开始的偏移量。
+`num` 是一个整数并指定最大值，表示要返回的下载次数。
+`keys` 参数请参考 [`aria2.tellStatus()`](#aria2.tellStatus) 方法。
+
+如果 `offset` 是正整数，则此方法返回 `[offset, offset + num)` 范围内的下载量。
+
+`offset` 可以是负整数。
+`offset == -1` 指向等待队列中的最后一个下载，而 `offset == -2` 指向最后的第二个下载，依此类推。
+响应中的下载​​顺序相反。
+
+例如，假设三个下载 "A"、"B" 和 "C" 按此顺序等待。
+`aria2.tellWaiting(0, 1)` 返回 `["A"]`；
+`aria2.tellWaiting(1, 2)` 返回 `["B", "C"]`；
+`aria2.tellWaiting(-1, 2)` 返回 `["C", "B"]`；
+
+响应是与 [`aria2.tellStatus()`](#aria2.tellStatus) 方法返回的相同结构的数组。
+<br /><br />
+
+
+
+
+#### <CMD>aria2.tellStopped([secret, ]offset, num[, keys])</CMD> {#aria2.tellStopped}
+
+- 此方法返回已停止下载的列表。
+
+`offset` 是一个整数，指定从前面等待的下载开始的偏移量。
+`num` 是一个整数并指定最大值，表示要返回的下载次数。
+`keys` 参数请参考 [`aria2.tellStatus()`](#aria2.tellStatus) 方法。
+
+`offset` 和 `num` 与 [`aria2.tellWaiting()`](#aria2.tellWaiting) 方法中描述的语义相同。
+
+响应是与 [`aria2.tellStatus()`](#aria2.tellStatus) 方法返回的相同结构的数组。
+<br /><br />
+
+
+
+
+#### <CMD>aria2.changePosition([secret, ]gid, pos, how)</CMD> {#aria2.changePosition}
+
+- 
+<br /><br />
+
+
+
+
+#### <CMD></CMD> {#}
+
+- 
+<br /><br />
+
 
 
 ----------------------------------------------------------------
@@ -3920,7 +4282,7 @@ Aria2 连接到的 Peer/Server 的数量。
 <br /><br />
 <br /><br />
 
-::: note title=译者注
+:::note 译者注
 
 Aria2 目前仍然不支持 Socks proxy。
 相关问题请参考: [Support Socks proxies #153](https://github.com/aria2/aria2/issues/153)

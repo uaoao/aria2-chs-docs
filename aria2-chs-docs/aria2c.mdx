@@ -4938,7 +4938,7 @@ JSON-RPC还支持批处理请求，如JSON-RRPC 2.0规范所述：
 ### 在 JSON-RPC 中使用 HTTP GET
 
 JSON-RPC 接口还支持通过 HTTP GET 的请求。
-GET 参数中的编码方案基于 JSON-RPC over HTTP 规范 [2008-1-15(RC1)]。
+GET 参数中的编码方案是基于 HTTP 的 JSON-RPC 中的规范 [2008-1-15(RC1)]。
 GET 参数的编码如下：
 
 ```text
@@ -4989,6 +4989,192 @@ JSON-RPC 接口也支持 JSONP。
 
 
 ### 基于 WebSocket 的 JSON-RPC
+
+基于 WebSocket 的 JSON-RPC 使用与基于 HTTP 的 JSON-RPC 相同的方法签名和响应格式。
+支持的 WebSocket 版本为 13，详细信息请参阅 [RFC 6455](#https://tools.ietf.org/html/rfc6455.html)。
+
+要向 RPC 服务器发送 RPC 请求，请在文本帧中发送序列化的 JSON 字符串。
+来自 RPC 服务器的响应也在文本帧中传递。
+
+- 通知
+
+RPC 服务器可能会向客户端发送通知。
+通知是单向的，因此接收通知的客户端不能对其作出响应。
+通知的方法签名与普通方法请求非常相似，但缺少 id 密钥。
+params 键的值是此通知携带的数据。
+值的格式因通知方法而异。
+定义了以下通知方法。
+<br /><br />
+
+
+
+
+#### <CMD>aria2.onDownloadStart(event)</CMD> {#aria2.onDownloadStart}
+
+- 此通知将在下载开始时发送。
+
+`event` 是结构类型，它包含以下键。
+值为字符串类型。
+
+> `gid`
+
+下载的 GID。
+<br /><br />
+
+
+
+
+#### <CMD>aria2.onDownloadPause(event)</CMD> {#aria2.onDownloadPause}
+
+- 暂停下载时将发送此通知。
+
+该 `event` 的结构与 [`aria2.onDownloadStart()`](#aria2.onDownloadStart) 方法的 `event` 参数相同。
+<br /><br />
+
+
+
+
+#### <CMD>aria2.onDownloadStop(event)</CMD> {#aria2.onDownloadStop}
+
+- 当用户停止下载时，将发送此通知。
+
+该 `event` 的结构与 [`aria2.onDownloadStart()`](#aria2.onDownloadStart) 方法的 `event` 参数相同。
+<br /><br />
+
+
+
+
+#### <CMD>aria2.onDownloadComplete(event)</CMD> {#aria2.onDownloadComplete}
+
+- 下载完成后将发送此通知。
+
+对于 BitTorrent 下载，此通知将在下载完成且播种结束时发送。
+该 `event` 的结构与 [`aria2.onDownloadStart()`](#aria2.onDownloadStart) 方法的 `event` 参数相同。
+<br /><br />
+
+
+
+
+#### <CMD>aria2.onDownloadError(event)</CMD> {#aria2.onDownloadError}
+
+- 当由于错误而停止下载时，将发送此通知。
+
+该 `event` 的结构与 [`aria2.onDownloadStart()`](#aria2.onDownloadStart) 方法的 `event` 参数相同。
+<br /><br />
+
+
+
+
+#### <CMD>aria2.onBtDownloadComplete(event)</CMD> {#aria2.onBtDownloadComplete}
+
+- 当种子下载完成但种子仍在进行时，将发送此通知。
+
+该 `event` 的结构与 [`aria2.onDownloadStart()`](#aria2.onDownloadStart) 方法的 `event` 参数相同。
+<br /><br />
+
+
+
+### 示例 XML-RPC 客户端代码
+
+以下 Ruby 脚本添加 `http://localhost/aria2.tar.bz2` 到 `aria2c`（在本地主机上运行），使用选项 `--dir=/downloads` 并打印 RPC 响应：
+
+```ruby showLineNumbers
+#!/usr/bin/env ruby
+
+require 'xmlrpc/client'
+require 'pp'
+
+client=XMLRPC::Client.new2("http://localhost:6800/rpc")
+
+options={ "dir" => "/downloads" }
+result=client.call("aria2.addUri", [ "http://localhost/aria2.tar.bz2" ], options)
+
+pp result
+```
+
+如果您是 Python 爱好者，可以使用 xmlrpclib（Python3 改用 xmlrpc.client） 与 Aria2 交互：
+
+```python showLineNumbers
+import xmlrpclib
+from pprint import pprint
+
+s = xmlrpclib.ServerProxy("http://localhost:6800/rpc")
+r = s.aria2.addUri(["http://localhost/aria2.tar.bz2"], {"dir":"/downloads"})
+pprint(r)
+```
+
+<br /><br />
+
+
+
+
+## 杂项
+
+### 控制台读数
+
+下载文件时，Aria2 会向控制台打印一个读数，以显示下载进度。
+控制台读数如下：
+
+```
+[#2089b0 400.0KiB/33.2MiB(1%) CN:1 DL:115.7KiB ETA:4m51s]
+```
+
+本节介绍这些数字和字符串的含义。
+
+- `#NNNNNN`
+
+GID 的前六个字符作为一个十六进制字符串。
+在 Aria2 内部，GID 是每个下载的唯一 ID。
+GID 在使用 RPC 接口与 Aria2 交互时特别有用。
+
+- `X/Y(Z%)`
+
+意义：完成长度／文件总长度（进度）。
+如果使用 [`--select-file`](#--select-file)，则这是所选文件的总和。
+
+- `SEED`
+
+当 Aria2 做种一个已完成的种子时的分享份额比率。
+
+- `CN`
+
+与 Aria2 建立了连接的数量。
+
+- `SD`
+
+Aria2 连接到的做种者。
+
+- `DL`
+
+下载速度（字节每秒）。
+
+- `UL`
+
+上传速度（字节每秒）。
+
+- `ETA`
+
+预期完成下载的时间。
+
+当进行多个下载时，将省略上面描述的一些信息，以便显示多个下载的信息。
+整体的下载和上传速度显示在该行的开头。
+
+
+当 Aria2 分配文件空间或验证校验和时，它还会打印这些操作的进度：
+
+- FileAlloc
+
+GID、已分配长度和总长度（字节）。
+
+- Checksum
+
+GID、已验证长度和总长度（字节）。
+<br /><br />
+
+
+
+
+## 使用示例
 
 ----------------------------------------------------------------
 
